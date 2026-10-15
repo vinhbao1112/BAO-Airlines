@@ -523,7 +523,7 @@
       transition: all 0.3s ease;
     }
 
-    /* HIỆU ỨNG CHỮ BIẾN HÌNH & CHẠY ÁNH SÁNG HUYỀN HUYỄN (SHIMMER TEXT) */
+    /* HIỆU ỨNG CHỮ BIẾN HÌNH & CHẠY ÁNH SÁNG HUYỀN HUYỄN (SHIMMER & CELESTIAL GLOW) */
     .section-title {
       font-size: 44px;
       font-weight: 800;
@@ -535,15 +535,16 @@
     }
 
     .shimmer-text {
-      background: linear-gradient(110deg, #ffffff 0%, #ffffff 35%, var(--accent-light) 50%, #ffffff 65%, #ffffff 100%);
-      background-size: 200% auto;
+      background: linear-gradient(110deg, #ffffff 0%, #ffffff 30%, #fef08a 45%, #67e8f9 55%, #ffffff 70%, #ffffff 100%);
+      background-size: 250% auto;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      animation: textShine 5s linear infinite;
+      animation: textShine 4.5s linear infinite;
+      filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.45));
     }
 
     @keyframes textShine {
-      to { background-position: 200% center; }
+      to { background-position: 250% center; }
     }
 
     .serif-italic {
@@ -554,6 +555,30 @@
       background: linear-gradient(120deg, #ffffff 30%, var(--accent-light) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      position: relative;
+    }
+
+    /* Hiệu ứng tia chớp kiếm khí lướt qua thẻ */
+    .glass-card::before, .paris-panel-card::before {
+      content: '';
+      position: absolute;
+      top: -150%;
+      left: -150%;
+      width: 300%;
+      height: 300%;
+      background: linear-gradient(45deg, transparent 40%, rgba(212, 175, 55, 0.15) 50%, rgba(56, 189, 248, 0.2) 53%, transparent 60%);
+      transform: rotate(25deg);
+      pointer-events: none;
+      transition: all 0.8s ease;
+      z-index: 1;
+      opacity: 0;
+    }
+
+    .glass-card:hover::before, .paris-panel-card:hover::before {
+      top: 100%;
+      left: 100%;
+      opacity: 1;
+      transition: all 1.2s ease-in-out;
     }
 
     .section-desc {
@@ -1265,13 +1290,13 @@
       images.push(img);
     }
 
-    // --- 2. CANVAS HIỆU ỨNG SINH ĐỘNG: ĐÀN CHIM HẢI ÂU BAY & BỤI SAO LẤP LÁNH KHI CUỘN ---
+    // --- 2. CANVAS HIỆU ỨNG TU TIÊN & HUYỀN HUYỄN TRÊN KHÔNG (KIẾM PHÁP, PHI KIẾM, MÁY BAY & SAO BĂNG) ---
     const fxCanvas = document.getElementById('fx-canvas');
     const fxCtx = fxCanvas.getContext('2d');
     fxCanvas.width = window.innerWidth;
     fxCanvas.height = window.innerHeight;
 
-    // Đàn chim bay vờn quanh mây trời
+    // A. Đàn chim bay vờn quanh mây trời
     class Bird {
       constructor() {
         this.reset();
@@ -1291,7 +1316,6 @@
         this.y += this.speedY - scrollVelocity * 0.03;
         this.wingAngle += this.wingSpeed + Math.abs(scrollVelocity) * 0.005;
 
-        // Nếu bay ra ngoài màn hình thì reset
         if (this.x > window.innerWidth + 60 || this.x < -60 || this.y > window.innerHeight + 40 || this.y < -40) {
           this.reset();
         }
@@ -1304,7 +1328,6 @@
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
-        // Đôi cánh chim vỗ chuyển động mượt mà
         const wingY = Math.sin(this.wingAngle) * (this.size * 0.45);
         ctx.beginPath();
         ctx.moveTo(-this.size, wingY);
@@ -1316,7 +1339,7 @@
       }
     }
 
-    // Hạt bụi sao phát sáng (Star particles)
+    // B. Hạt bụi linh khí sao lấp lánh (Celestial Sparkles)
     class Sparkle {
       constructor() {
         this.reset();
@@ -1324,7 +1347,7 @@
       reset() {
         this.x = Math.random() * window.innerWidth;
         this.y = Math.random() * window.innerHeight;
-        this.size = 1 + Math.random() * 2.2;
+        this.size = 1 + Math.random() * 2.4;
         this.alpha = Math.random();
         this.speedAlpha = 0.01 + Math.random() * 0.02;
         this.speedY = -(0.3 + Math.random() * 0.7);
@@ -1343,7 +1366,9 @@
       }
       draw(ctx) {
         ctx.save();
-        ctx.fillStyle = `rgba(254, 240, 138, ${Math.max(0, Math.min(1, this.alpha * 0.7))})`;
+        ctx.fillStyle = `rgba(254, 240, 138, ${Math.max(0, Math.min(1, this.alpha * 0.75))})`;
+        ctx.shadowColor = '#fef08a';
+        ctx.shadowBlur = 6;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
@@ -1351,8 +1376,223 @@
       }
     }
 
-    const birds = Array.from({ length: 6 }, () => new Bird());
-    const sparkles = Array.from({ length: 45 }, () => new Sparkle());
+    // C. Phi Kiếm Tu Tiên ngự phong lướt qua bầu trời (Flying Celestial Sword)
+    class FlyingSword {
+      constructor() {
+        this.reset();
+      }
+      reset() {
+        this.x = -150 - Math.random() * 300;
+        this.y = 100 + Math.random() * (window.innerHeight * 0.6);
+        this.speed = 3.5 + Math.random() * 3;
+        this.angle = -0.15 + (Math.random() - 0.5) * 0.2;
+        this.trail = [];
+        this.color = Math.random() < 0.6 ? '#67e8f9' : '#d4af37'; // Kiếm khí lam ngọc hoặc hoàng kim
+      }
+      update(scrollVel) {
+        this.x += Math.cos(this.angle) * this.speed + Math.abs(scrollVel) * 0.05;
+        this.y += Math.sin(this.angle) * this.speed;
+
+        this.trail.unshift({ x: this.x, y: this.y, alpha: 1.0 });
+        if (this.trail.length > 22) this.trail.pop();
+        this.trail.forEach(t => t.alpha *= 0.88);
+
+        if (this.x > window.innerWidth + 200) {
+          this.reset();
+        }
+      }
+      draw(ctx) {
+        ctx.save();
+        // Vẽ vệt kiếm khí rực rỡ kéo dài phía sau
+        if (this.trail.length > 1) {
+          ctx.beginPath();
+          ctx.moveTo(this.trail[0].x, this.trail[0].y);
+          for (let i = 1; i < this.trail.length; i++) {
+            ctx.lineTo(this.trail[i].x, this.trail[i].y);
+          }
+          ctx.strokeStyle = this.color;
+          ctx.lineWidth = 3;
+          ctx.shadowColor = this.color;
+          ctx.shadowBlur = 14;
+          ctx.stroke();
+        }
+
+        // Thân kiếm tu tiên
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 18;
+        
+        ctx.beginPath();
+        ctx.moveTo(18, 0);
+        ctx.lineTo(-14, -3);
+        ctx.lineTo(-24, 0);
+        ctx.lineTo(-14, 3);
+        ctx.closePath();
+        ctx.fill();
+
+        // Vòng chuôi kiếm
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-18, -6, 2, 12);
+
+        ctx.restore();
+      }
+    }
+
+    // D. Máy Bay Phản Lực / Tên Lửa Vút Bay Lên Trời (Supersonic Jet & Rocket)
+    class SkyRocket {
+      constructor() {
+        this.reset();
+      }
+      reset() {
+        this.x = 80 + Math.random() * (window.innerWidth - 160);
+        this.y = window.innerHeight + 150 + Math.random() * 400;
+        this.speedY = -(4.5 + Math.random() * 3.5);
+        this.speedX = (Math.random() - 0.5) * 1.5;
+        this.smoke = [];
+      }
+      update(scrollVel) {
+        this.y += this.speedY - Math.abs(scrollVel) * 0.08;
+        this.x += this.speedX;
+
+        // Xả khói lửa phản lực
+        if (Math.random() < 0.8) {
+          this.smoke.push({
+            x: this.x + (Math.random() - 0.5) * 4,
+            y: this.y + 18,
+            radius: 2 + Math.random() * 3,
+            alpha: 1.0,
+            color: Math.random() < 0.6 ? '#f59e0b' : '#38bdf8'
+          });
+        }
+        this.smoke.forEach(s => {
+          s.y += 1.5;
+          s.radius += 0.3;
+          s.alpha *= 0.92;
+        });
+        this.smoke = this.smoke.filter(s => s.alpha > 0.05);
+
+        if (this.y < -150) {
+          this.reset();
+        }
+      }
+      draw(ctx) {
+        ctx.save();
+        // Vẽ khói lửa tên lửa
+        this.smoke.forEach(s => {
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+          ctx.fillStyle = s.color;
+          ctx.globalAlpha = s.alpha * 0.7;
+          ctx.shadowColor = s.color;
+          ctx.shadowBlur = 10;
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1.0;
+
+        // Thân máy bay/tên lửa
+        ctx.translate(this.x, this.y);
+        const angle = Math.atan2(this.speedY, this.speedX) + Math.PI / 2;
+        ctx.rotate(angle);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = '#38bdf8';
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.moveTo(0, -16);
+        ctx.lineTo(6, 12);
+        ctx.lineTo(0, 8);
+        ctx.lineTo(-6, 12);
+        ctx.closePath();
+        ctx.fill();
+
+        // Ngọn lửa đuôi
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.moveTo(-3, 10);
+        ctx.lineTo(0, 22 + Math.random() * 8);
+        ctx.lineTo(3, 10);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
+      }
+    }
+
+    // E. Sao Băng Huyền Ảo Quét Ngang Bầu Trời (Shooting Star / Meteor)
+    class Meteor {
+      constructor() {
+        this.reset();
+      }
+      reset() {
+        this.x = Math.random() * (window.innerWidth * 1.2);
+        this.y = -60;
+        this.length = 120 + Math.random() * 160;
+        this.speed = 12 + Math.random() * 10;
+        this.angle = Math.PI / 4 + (Math.random() - 0.5) * 0.2;
+        this.active = Math.random() < 0.25; // Xuất hiện ngẫu nhiên
+      }
+      update() {
+        if (!this.active) {
+          if (Math.random() < 0.008) this.active = true;
+          return;
+        }
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed;
+
+        if (this.x > window.innerWidth + 200 || this.y > window.innerHeight + 200) {
+          this.reset();
+          this.active = false;
+        }
+      }
+      draw(ctx) {
+        if (!this.active) return;
+        ctx.save();
+        const tailX = this.x - Math.cos(this.angle) * this.length;
+        const tailY = this.y - Math.sin(this.angle) * this.length;
+
+        const grad = ctx.createLinearGradient(tailX, tailY, this.x, this.y);
+        grad.addColorStop(0, 'transparent');
+        grad.addColorStop(0.7, 'rgba(212, 175, 55, 0.4)');
+        grad.addColorStop(1, '#ffffff');
+
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = '#d4af37';
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.moveTo(tailX, tailY);
+        ctx.lineTo(this.x, this.y);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+    }
+
+    // F. Vệt Kiếm Khí Bộc Phát Khi Click Chuột (Sword Burst Click Effect)
+    const swordBursts = [];
+    window.addEventListener('click', (e) => {
+      for (let i = 0; i < 8; i++) {
+        const ang = (Math.PI * 2 / 8) * i + Math.random() * 0.4;
+        swordBursts.push({
+          x: e.clientX,
+          y: e.clientY,
+          vx: Math.cos(ang) * (4 + Math.random() * 6),
+          vy: Math.sin(ang) * (4 + Math.random() * 6),
+          len: 18 + Math.random() * 24,
+          life: 1.0,
+          color: i % 2 === 0 ? '#67e8f9' : '#d4af37'
+        });
+      }
+    });
+
+    const birds = Array.from({ length: 5 }, () => new Bird());
+    const sparkles = Array.from({ length: 40 }, () => new Sparkle());
+    const swords = Array.from({ length: 2 }, () => new FlyingSword());
+    const rockets = Array.from({ length: 2 }, () => new SkyRocket());
+    const meteors = Array.from({ length: 3 }, () => new Meteor());
     let lastScrollY = window.scrollY;
     let scrollVelocity = 0;
 
@@ -1567,16 +1807,60 @@
       // Giảm dần vận tốc cuộn chuột (friction)
       scrollVelocity *= 0.92;
 
-      // Vẽ đàn chim & bụi sao lấp lánh trên mây
+      // Vẽ đàn chim, bụi sao, phi kiếm, tên lửa & sao băng huyền huyễn trên mây
       fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+      
+      // 1. Bụi sao
       sparkles.forEach(s => {
         s.update(scrollVelocity);
         s.draw(fxCtx);
       });
+
+      // 2. Sao băng
+      meteors.forEach(m => {
+        m.update();
+        m.draw(fxCtx);
+      });
+
+      // 3. Đàn chim
       birds.forEach(b => {
         b.update(scrollVelocity);
         b.draw(fxCtx);
       });
+
+      // 4. Phi kiếm tu tiên ngự phong
+      swords.forEach(sw => {
+        sw.update(scrollVelocity);
+        sw.draw(fxCtx);
+      });
+
+      // 5. Tên lửa phản lực vút bay lên tầng mây
+      rockets.forEach(rk => {
+        rk.update(scrollVelocity);
+        rk.draw(fxCtx);
+      });
+
+      // 6. Kiếm khí bộc phát khi click chuột
+      for (let i = swordBursts.length - 1; i >= 0; i--) {
+        const b = swordBursts[i];
+        b.x += b.vx;
+        b.y += b.vy;
+        b.life *= 0.91;
+
+        fxCtx.save();
+        fxCtx.strokeStyle = b.color;
+        fxCtx.shadowColor = b.color;
+        fxCtx.shadowBlur = 12;
+        fxCtx.lineWidth = 2.5 * b.life;
+        fxCtx.globalAlpha = b.life;
+        fxCtx.beginPath();
+        fxCtx.moveTo(b.x, b.y);
+        fxCtx.lineTo(b.x - b.vx * 2, b.y - b.vy * 2);
+        fxCtx.stroke();
+        fxCtx.restore();
+
+        if (b.life < 0.05) swordBursts.splice(i, 1);
+      }
 
       // Lerp cho con trỏ ring và vệt sáng chuột
       ringX += (mouseX - ringX) * 0.18;
