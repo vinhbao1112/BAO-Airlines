@@ -532,13 +532,9 @@
       margin-bottom: 18px;
       color: #ffffff;
       position: relative;
-      animation: floatTitle 6s ease-in-out infinite alternate;
-    }
-
-    @keyframes floatTitle {
-      0% { transform: translateY(0px); }
-      50% { transform: translateY(-5px); }
-      100% { transform: translateY(2px); }
+      will-change: transform, opacity;
+      transform: translate3d(0, 0, 0);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
     }
 
     .shimmer-text {
@@ -601,13 +597,9 @@
       color: var(--text-muted);
       margin-bottom: 24px;
       font-weight: 400;
-      transition: all 0.3s ease;
-      animation: floatSubtle 7s ease-in-out infinite alternate;
-    }
-
-    @keyframes floatSubtle {
-      0% { transform: translateY(0); }
-      100% { transform: translateY(-3px); }
+      will-change: transform, opacity;
+      transform: translate3d(0, 0, 0);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
     }
 
     .section-desc strong {
@@ -639,8 +631,10 @@
       gap: 10px;
       font-size: 13.5px;
       color: rgba(255, 255, 255, 0.88);
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       cursor: default;
+      will-change: transform, opacity;
+      transform: translate3d(0, 0, 0);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, color 0.3s ease, text-shadow 0.3s ease;
     }
 
     .perk-item:hover {
@@ -807,6 +801,9 @@
     .paris-left-panel, .paris-right-panel {
       width: 440px;
       max-width: 42vw;
+      will-change: transform, opacity;
+      transform: translate3d(0, 0, 0);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
     }
 
     .paris-panel-card {
@@ -833,6 +830,8 @@
       top: 10%;
       left: 50%;
       transform: translateX(-50%);
+      will-change: transform, opacity;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
       display: inline-flex;
       align-items: center;
       gap: 10px;
@@ -1282,7 +1281,7 @@
     // --- 1. KHỞI TẠO CANVAS SEQUENCE (50 FRAMES 4K ULTRA-HD PNG) ---
     const frameCount = 50;
     const canvas = document.getElementById('flight-canvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false }); // Tối ưu GPU: tắt alpha trên background canvas
 
     const getFrameUrl = (idx) => {
       const padded = String(idx).padStart(3, '0');
@@ -1293,20 +1292,24 @@
     let loadedCount = 0;
     let targetFrame = 1;
     let currentFrame = 1;
+    let lastDrawnFrame = -1;
 
     function resizeCanvas() {
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
+      // Giới hạn max DPR = 1.5 để đảm bảo 60fps mượt mà trên màn hình Retina / 4K
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      canvas.width = Math.round(window.innerWidth * dpr);
+      canvas.height = Math.round(window.innerHeight * dpr);
+      lastDrawnFrame = -1; // Buộc vẽ lại frame sau khi resize
       render(Math.round(currentFrame));
 
-      // Resize luôn canvas hiệu ứng chim & bụi sao
+      // Canvas hiệu ứng hạt & phi kiếm
       fxCanvas.width = window.innerWidth;
       fxCanvas.height = window.innerHeight;
     }
     window.addEventListener('resize', resizeCanvas);
 
     function render(frameIdx) {
+      if (frameIdx === lastDrawnFrame) return; // BỎ QUA NẾU FRAME CHƯA ĐỔI -> Tránh ngốn GPU không cần thiết
       const img = images[frameIdx - 1];
       if (!img || !img.complete || img.naturalWidth === 0) return;
 
@@ -1321,21 +1324,33 @@
       const nx = (cw - nw) / 2;
       const ny = (ch - nh) / 2;
 
-      ctx.clearRect(0, 0, cw, ch);
       ctx.drawImage(img, nx, ny, nw, nh);
+      lastDrawnFrame = frameIdx;
     }
 
-    // Preload ảnh
+    // Preload ảnh không đồng bộ và giải mã trước (img.decode) để không chặn main-thread khi cuộn
     for (let i = 1; i <= frameCount; i++) {
       const img = new Image();
       img.src = getFrameUrl(i);
-      img.onload = () => {
-        loadedCount++;
-        if (i === 1) {
-          resizeCanvas();
-          render(1);
-        }
-      };
+      if ('decode' in img) {
+        img.decode().then(() => {
+          loadedCount++;
+          if (i === 1) {
+            resizeCanvas();
+            render(1);
+          }
+        }).catch(() => {
+          loadedCount++;
+        });
+      } else {
+        img.onload = () => {
+          loadedCount++;
+          if (i === 1) {
+            resizeCanvas();
+            render(1);
+          }
+        };
+      }
       images.push(img);
     }
 
@@ -1638,7 +1653,7 @@
     });
 
     const birds = Array.from({ length: 5 }, () => new Bird());
-    const sparkles = Array.from({ length: 40 }, () => new Sparkle());
+    const sparkles = Array.from({ length: 32 }, () => new Sparkle());
     const swords = Array.from({ length: 2 }, () => new FlyingSword());
     const rockets = Array.from({ length: 2 }, () => new SkyRocket());
     const meteors = Array.from({ length: 3 }, () => new Meteor());
@@ -1662,7 +1677,7 @@
       mouseY = e.clientY;
       cursorDot.style.left = `${mouseX}px`;
       cursorDot.style.top = `${mouseY}px`;
-    });
+    }, { passive: true });
 
     document.querySelectorAll('a, button, .metric-item, .step-dot, .paris-panel-card').forEach(el => {
       el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
@@ -1681,10 +1696,10 @@
 
         const centerX = rect.width / 2;
         const centerY = rect.height / 2;
-        const rotateX = ((y - centerY) / centerY) * -6;
-        const rotateY = ((x - centerX) / centerX) * 6;
+        const rotateX = ((y - centerY) / centerY) * -5;
+        const rotateY = ((x - centerX) / centerX) * 5;
 
-        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-3px)`;
+        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-2px)`;
       });
 
       card.addEventListener('mouseleave', () => {
@@ -1715,6 +1730,7 @@
 
     let targetProgress = 0;
     let currentProgress = 0;
+    let lastRenderedProgress = -1;
 
     function updateScrollProgress() {
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
@@ -1753,41 +1769,45 @@
       const scale = 0.95 + weight * 0.05;
 
       if (slideDir === 'Y') {
-        element.style.transform = `translateY(${offset}px) scale(${scale})`;
+        element.style.transform = `translate3d(0, ${offset.toFixed(1)}px, 0) scale(${scale.toFixed(3)})`;
       } else if (slideDir === 'X-left') {
-        element.style.transform = `translateX(${-offset}px) scale(${scale})`;
+        element.style.transform = `translate3d(${-offset.toFixed(1)}px, 0, 0) scale(${scale.toFixed(3)})`;
       } else if (slideDir === 'X-right') {
-        element.style.transform = `translateX(${offset}px) scale(${scale})`;
+        element.style.transform = `translate3d(${offset.toFixed(1)}px, 0, 0) scale(${scale.toFixed(3)})`;
       }
 
-      // HIỆU ỨNG CHỮ BAY NHẸ PHÂN TẦNG HUYỀN HUYỄN (STAGGERED CELESTIAL DRIFT)
+      // HIỆU ỨNG CHỮ BAY PHÂN TẦNG TINH TẾ & MƯỢT MÀ
       const title = element.querySelector('.section-title');
       const desc = element.querySelector('.section-desc');
       const perks = element.querySelectorAll('.perk-item');
 
       if (title) {
-        title.style.transform = `translateY(${(1 - weight) * 16}px)`;
-        title.style.opacity = Math.min(1, weight * 1.25);
+        title.style.transform = `translate3d(0, ${((1 - weight) * 16).toFixed(1)}px, 0)`;
+        title.style.opacity = Math.min(1, weight * 1.25).toFixed(3);
       }
       if (desc) {
-        desc.style.transform = `translateY(${(1 - weight) * 24}px)`;
-        desc.style.opacity = Math.min(1, weight * 1.1);
+        desc.style.transform = `translate3d(0, ${((1 - weight) * 24).toFixed(1)}px, 0)`;
+        desc.style.opacity = Math.min(1, weight * 1.1).toFixed(3);
       }
       if (perks) {
         perks.forEach((p, idx) => {
-          p.style.transform = `translateX(${(1 - weight) * (18 + idx * 8)}px)`;
-          p.style.opacity = Math.min(1, weight * (1 + idx * 0.15));
+          p.style.transform = `translate3d(${((1 - weight) * (18 + idx * 8)).toFixed(1)}px, 0, 0)`;
+          p.style.opacity = Math.min(1, weight * (1 + idx * 0.15)).toFixed(3);
         });
       }
     }
 
     function updateAnimations(p) {
+      // Chỉ cập nhật DOM khi progress có thay đổi đáng kể (> 0.0003) để tránh Layout Reflows
+      if (Math.abs(p - lastRenderedProgress) < 0.0003) return;
+      lastRenderedProgress = p;
+
       if (scrollHint) {
-        scrollHint.style.opacity = Math.max(0, 1 - p * 8);
+        scrollHint.style.opacity = Math.max(0, 1 - p * 8).toFixed(2);
       }
 
       if (progressFill) {
-        progressFill.style.height = `${p * 100}%`;
+        progressFill.style.height = `${(p * 100).toFixed(1)}%`;
       }
 
       if (altDisplay) {
@@ -1823,15 +1843,15 @@
       const topTag = stage4.querySelector('.eiffel-spotlight-tag');
 
       if (leftPanel) {
-        leftPanel.style.transform = `translateX(${(1 - w4) * -50}px)`;
+        leftPanel.style.transform = `translate3d(${((1 - w4) * -50).toFixed(1)}px, 0, 0)`;
         leftPanel.style.opacity = w4.toFixed(3);
       }
       if (rightPanel) {
-        rightPanel.style.transform = `translateX(${(1 - w4) * 50}px)`;
+        rightPanel.style.transform = `translate3d(${((1 - w4) * 50).toFixed(1)}px, 0, 0)`;
         rightPanel.style.opacity = w4.toFixed(3);
       }
       if (topTag) {
-        topTag.style.transform = `translate(-50%, ${(1 - w4) * -30}px)`;
+        topTag.style.transform = `translate3d(-50%, ${((1 - w4) * -30).toFixed(1)}px, 0)`;
         topTag.style.opacity = w4.toFixed(3);
       }
 
@@ -1862,15 +1882,15 @@
       });
     }
 
-    // --- 6. VÒNG LẶP ANIMATION LERP & VẼ HIỆU ỨNG SỐNG ĐỘNG ---
+    // --- 6. VÒNG LẶP ANIMATION LERP & VẼ HIỆU ỨNG SỐNG ĐỘNG (60FPS CINEMATIC DAMPING) ---
     function animate() {
-      // Lerp chuỗi frame ảnh
-      currentFrame += (targetFrame - currentFrame) * 0.12;
+      // Lerp chuỗi frame mượt mà chuẩn điện ảnh (tinh chỉnh damping 0.085)
+      currentFrame += (targetFrame - currentFrame) * 0.085;
       const frameToDraw = Math.max(1, Math.min(frameCount, Math.round(currentFrame)));
       render(frameToDraw);
 
       // Lerp nội dung text và UI
-      currentProgress += (targetProgress - currentProgress) * 0.12;
+      currentProgress += (targetProgress - currentProgress) * 0.085;
       updateAnimations(currentProgress);
 
       // Giảm dần vận tốc cuộn chuột (friction)
