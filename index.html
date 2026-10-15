@@ -1279,14 +1279,14 @@
   </div>
 
   <script>
-    // --- 1. KHỞI TẠO CANVAS SEQUENCE (284 FRAMES - HIGH FPS) ---
-    const frameCount = 284;
+    // --- 1. KHỞI TẠO CANVAS SEQUENCE (50 FRAMES 4K ULTRA-HD PNG) ---
+    const frameCount = 50;
     const canvas = document.getElementById('flight-canvas');
     const ctx = canvas.getContext('2d');
 
     const getFrameUrl = (idx) => {
       const padded = String(idx).padStart(3, '0');
-      return `ezgif-4c8184ffbcb119d2-jpg/ezgif-frame-${padded}.jpg`;
+      return `a/ezgif-frame-${padded}.png`;
     };
 
     const images = [];
