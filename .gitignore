@@ -1,0 +1,5 @@
+# Tệp nặng không cần thiết đẩy lên Git
+node_modules/
+*.mp4
+*.zip
+.DS_Store

@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BAO Airlines - Hành Trình Chạm Tới Paris</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,700;1,400;1,600&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    :root {
+      --primary: #ffffff;
+      --accent: #d4af37;
+      --accent-light: #fef08a;
+      --accent-glow: rgba(212, 175, 55, 0.45);
+      --bg: #030712;
+      --text-muted: rgba(255, 255, 255, 0.78);
+      --glass-bg: rgba(9, 16, 35, 0.55);
+      --glass-border: rgba(255, 255, 255, 0.18);
+      --glass-blur: blur(28px);
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--primary);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow-x: hidden;
+      cursor: default;
+    }
+
+    /* CUSTOM MOUSE CURSOR & TRAILING GLOW EFFECT */
+    .custom-cursor-dot {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: width 0.2s, height 0.2s, background-color 0.2s;
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    .custom-cursor-ring {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 36px;
+      height: 36px;
+      border: 1.5px solid rgba(212, 175, 55, 0.5);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%, -50%);
+      transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), height 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, background 0.3s ease;
+    }
+
+    body:hover .custom-cursor-dot { opacity: 1; }
+    body.cursor-hover .custom-cursor-dot {
+      width: 14px;
+      height: 14px;
+      background: #ffffff;
+    }
+    body.cursor-hover .custom-cursor-ring {
+      width: 54px;
+      height: 54px;
+      border-color: rgba(255, 255, 255, 0.85);
+      background: rgba(212, 175, 55, 0.12);
+    }
+
+    /* CHIỀU DÀI TRANG CUỘN */
+    .scroll-container {
+      height: 750vh;
+      position: relative;
+    }
+
+    /* CANVAS NỀN CỐ ĐỊNH CHUỖI ẢNH MƯỢT */
+    .canvas-fixed {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      pointer-events: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #000;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    /* LỚP CANVAS HIỆU ỨNG TƯƠNG TÁC (CHIM HẢI ÂU BAY, BỤI SAO & BĂNG TRÔI) */
+    #fx-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 4;
+      pointer-events: none;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* LỚP PHỦ HẠT BỤI SAO & GRADIENT ĐIỆN ẢNH */
+    .cinematic-vignette {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 50%, rgba(3, 7, 18, 0) 35%, rgba(2, 6, 23, 0.85) 100%),
+                  linear-gradient(180deg, rgba(3, 7, 18, 0.65) 0%, transparent 20%, transparent 80%, rgba(3, 7, 18, 0.85) 100%);
+    }
+
+    /* MÀNG ĐÈN CHÙM CON TRỎ CHUỘT THEO DÕI (INTERACTIVE AMBIENT LIGHT) */
+    .ambient-mouse-glow {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, rgba(59, 130, 246, 0.04) 50%, transparent 70%);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 3;
+      transition: opacity 0.5s ease;
+      will-change: transform;
+    }
+
+    /* HEADER CỐ ĐỊNH VỚI HIỆU ỨNG SƯƠNG MÂY HUYỀN HUYỄN */
+    .main-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 20px 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 50;
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      background: linear-gradient(180deg, rgba(3, 7, 24, 0.75) 0%, rgba(5, 12, 34, 0.45) 75%, transparent 100%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      transition: all 0.4s ease;
+      overflow: hidden;
+    }
+
+    /* Hiệu ứng dải mây bồng bềnh lướt qua Header */
+    .main-header::before {
+      content: '';
+      position: absolute;
+      top: -30px;
+      left: -20%;
+      width: 140%;
+      height: 90px;
+      background: radial-gradient(ellipse at 50% 30%, rgba(255, 255, 255, 0.14) 0%, rgba(186, 230, 253, 0.09) 40%, rgba(212, 175, 55, 0.06) 60%, transparent 80%);
+      filter: blur(20px);
+      pointer-events: none;
+      animation: cloudDrift 14s ease-in-out infinite alternate;
+      z-index: 0;
+    }
+
+    @keyframes cloudDrift {
+      0% { transform: translateX(-40px) scaleY(0.9); opacity: 0.6; }
+      50% { transform: translateX(30px) scaleY(1.2); opacity: 0.9; }
+      100% { transform: translateX(-20px) scaleY(1); opacity: 0.7; }
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      text-decoration: none;
+      color: #fff;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      z-index: 2;
+    }
+
+    .brand:hover {
+      transform: scale(1.03);
+    }
+
+    .brand-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 13px;
+      border: 1.5px solid var(--accent);
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.35), rgba(255, 255, 255, 0.08));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      letter-spacing: 1.2px;
+      color: var(--accent);
+      box-shadow: 0 0 24px rgba(212, 175, 55, 0.35);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .brand-logo::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(60deg, transparent, rgba(255,255,255,0.4), transparent);
+      transform: rotate(30deg) translateY(-100%);
+      transition: transform 0.7s;
+    }
+    .brand:hover .brand-logo::after {
+      transform: rotate(30deg) translateY(100%);
+    }
+
+    .brand-text h1 {
+      font-size: 18.5px;
+      font-weight: 800;
+      letter-spacing: 3.2px;
+      line-height: 1.15;
+      text-transform: uppercase;
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.6);
+    }
+
+    .brand-text span {
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--accent);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    /* NAVIGATION PILL */
+    .nav-pill {
+      background: rgba(10, 18, 42, 0.68);
+      border: 1.5px solid rgba(255, 255, 255, 0.22);
+      border-radius: 9999px;
+      padding: 6px 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.6), 
+                  0 0 30px rgba(186, 230, 253, 0.12),
+                  inset 0 1px 1px rgba(255, 255, 255, 0.35);
+      position: relative;
+      z-index: 2;
+    }
+
+    .nav-pill::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 9999px;
+      background: radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.15), rgba(125, 211, 252, 0.1), transparent 70%);
+      z-index: -1;
+      filter: blur(8px);
+      opacity: 0.8;
+      animation: cloudPulse 6s ease-in-out infinite alternate;
+    }
+
+    @keyframes cloudPulse {
+      0% { opacity: 0.5; transform: scale(0.98); }
+      100% { opacity: 1; transform: scale(1.02); }
+    }
+
+    .nav-link {
+      color: rgba(255, 255, 255, 0.88);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.6px;
+      padding: 10px 24px;
+      border-radius: 9999px;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      z-index: 1;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .nav-link:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.3);
+    }
+
+    .nav-link.active {
+      background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+      color: #030712;
+      font-weight: 700;
+      border-color: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 4px 20px rgba(255, 255, 255, 0.45), 0 0 15px rgba(212, 175, 55, 0.3);
+      transform: scale(1.02);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .flight-status-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 9px 20px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.3);
+      backdrop-filter: blur(12px);
+      transition: all 0.3s ease;
+    }
+    .flight-status-badge:hover {
+      border-color: rgba(212, 175, 55, 0.5);
+      background: rgba(212, 175, 55, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 10px #10b981;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1.2); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* THANH TIẾN ĐỘ CHUYẾN BAY */
+    .flight-progress-indicator {
+      position: fixed;
+      right: 36px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 40;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .progress-track {
+      width: 2px;
+      height: 180px;
+      background: rgba(255, 255, 255, 0.15);
+      position: relative;
+      border-radius: 2px;
+    }
+
+    .progress-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 0%;
+      background: linear-gradient(180deg, var(--accent), #f59e0b);
+      box-shadow: 0 0 14px var(--accent);
+      border-radius: 2px;
+    }
+
+    .progress-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      position: absolute;
+      top: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      height: 100%;
+      justify-content: space-between;
+    }
+
+    .step-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #030712;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+    }
+
+    .step-dot:hover {
+      transform: scale(1.4);
+      border-color: #fff;
+    }
+
+    .step-dot.active {
+      border-color: var(--accent);
+      background: var(--accent);
+      box-shadow: 0 0 16px var(--accent);
+      transform: scale(1.35);
+    }
+
+    .alt-meter {
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+      font-weight: 700;
+      text-transform: uppercase;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      margin-top: 10px;
+      opacity: 0.9;
+    }
+
+    /* CÁC PHÂN ĐOẠN NỘI DUNG */
+    .stages-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .stage-section {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      padding: 0 7vw;
+      opacity: 0;
+      pointer-events: none;
+      perspective: 1200px;
+      will-change: transform, opacity;
+    }
+
+    .stage-section.active {
+      pointer-events: auto;
+    }
+
+    /* THẺ GLASSMORPHISM CÓ HIỆU ỨNG TILT 3D */
+    .glass-card {
+      background: rgba(6, 14, 32, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border-radius: 28px;
+      padding: 42px 46px;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      max-width: 630px;
+      position: relative;
+      overflow: hidden;
+      transform-style: preserve-3d;
+      transition: transform 0.15s ease-out, box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+
+    .glass-card:hover {
+      border-color: rgba(212, 175, 55, 0.45);
+      box-shadow: 0 35px 80px rgba(0, 0, 0, 0.85), 0 0 40px rgba(212, 175, 55, 0.2);
+    }
+
+    .card-spotlight {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle 280px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.14), transparent 80%);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      z-index: 1;
+    }
+
+    .glass-card:hover .card-spotlight {
+      opacity: 1;
+    }
+
+    .card-content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .card-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+      padding: 6px 16px;
+      background: rgba(212, 175, 55, 0.14);
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      border-radius: 999px;
+      transition: all 0.3s ease;
+    }
+
+    /* HIỆU ỨNG CHỮ BIẾN HÌNH & CHẠY ÁNH SÁNG HUYỀN HUYỄN (SHIMMER TEXT) */
+    .section-title {
+      font-size: 44px;
+      font-weight: 800;
+      line-height: 1.18;
+      letter-spacing: -0.5px;
+      margin-bottom: 18px;
+      color: #ffffff;
+      position: relative;
+    }
+
+    .shimmer-text {
+      background: linear-gradient(110deg, #ffffff 0%, #ffffff 35%, var(--accent-light) 50%, #ffffff 65%, #ffffff 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: textShine 5s linear infinite;
+    }
+
+    @keyframes textShine {
+      to { background-position: 200% center; }
+    }
+
+    .serif-italic {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-weight: 400;
+      color: #f1f5f9;
+      background: linear-gradient(120deg, #ffffff 30%, var(--accent-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .section-desc {
+      font-size: 14.5px;
+      line-height: 1.8;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      font-weight: 400;
+    }
+
+    /* DANH SÁCH ĐIỂM NỔI BẬT THIẾT KẾ HUYỀN ẢO */
+    .perks-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 26px;
+      border-left: 2px solid rgba(212, 175, 55, 0.3);
+      padding-left: 16px;
+    }
+
+    .perk-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13.5px;
+      color: rgba(255, 255, 255, 0.88);
+    }
+
+    .perk-icon {
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* GRID THÔNG SỐ VỚI HIỆU ỨNG HOVER */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 26px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .metric-item {
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .metric-item:hover {
+      background: rgba(212, 175, 55, 0.09);
+      border-color: rgba(212, 175, 55, 0.35);
+      transform: translateY(-4px) scale(1.03);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .metric-item .val {
+      font-size: 20px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.5px;
+    }
+
+    .metric-item .lbl {
+      font-size: 10.5px;
+      color: rgba(255, 255, 255, 0.7);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-top: 4px;
+    }
+
+    /* NÚT TƯƠNG TÁC (CTA) */
+    .cta-btn-primary {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: #ffffff;
+      color: #030712;
+      border: none;
+      padding: 15px 34px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: 0 6px 28px rgba(255, 255, 255, 0.2);
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+    }
+
+    .cta-btn-primary::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+      transition: left 0.6s ease;
+    }
+
+    .cta-btn-primary:hover::after {
+      left: 100%;
+    }
+
+    .cta-btn-primary:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 12px 36px rgba(212, 175, 55, 0.4);
+      background: var(--accent);
+      color: #030712;
+    }
+
+    .cta-btn-primary svg {
+      width: 16px;
+      height: 16px;
+      stroke-width: 2.5;
+      transition: transform 0.3s ease;
+    }
+
+    .cta-btn-primary:hover svg {
+      transform: translateX(4px);
+    }
+
+    .cta-btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 14px 28px;
+      border-radius: 999px;
+      font-size: 13.5px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      margin-left: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .cta-btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(255, 255, 255, 0.45);
+      transform: translateY(-2px);
+    }
+
+    /* BỐ CỤC CÁC PHÂN ĐOẠN */
+    #stage-1 { justify-content: flex-start; }
+    #stage-2 { justify-content: center; text-align: center; }
+    #stage-2 .glass-card { max-width: 780px; }
+    #stage-2 .metrics-grid { text-align: center; }
+    #stage-2 .perks-list { border-left: none; border-top: 1px solid rgba(212, 175, 55, 0.3); padding-top: 14px; padding-left: 0; flex-direction: row; justify-content: center; gap: 24px; }
+    #stage-3 { justify-content: flex-end; }
+
+    /* PHÂN ĐOẠN 4: BỐ CỤC 2 CÁNH ĐẦY ĐỦ NỘI DUNG, HÉ LỘ TOÀN CẢNH THÁP EIFFEL Ở TÂM */
+    #stage-4 {
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 0 4.5vw 36px 4.5vw;
+    }
+
+    .paris-split-container {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 30px;
+      position: relative;
+    }
+
+    .paris-left-panel, .paris-right-panel {
+      width: 440px;
+      max-width: 42vw;
+    }
+
+    .paris-panel-card {
+      background: rgba(6, 14, 32, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border-radius: 26px;
+      padding: 34px 34px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(212, 175, 55, 0.15);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .paris-panel-card:hover {
+      border-color: rgba(212, 175, 55, 0.5);
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.9), 0 0 50px rgba(212, 175, 55, 0.25);
+      transform: translateY(-4px);
+    }
+
+    .eiffel-spotlight-tag {
+      position: absolute;
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(3, 7, 24, 0.68);
+      border: 1px solid rgba(212, 175, 55, 0.45);
+      padding: 9px 26px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--accent);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 25px rgba(212, 175, 55, 0.3);
+      pointer-events: auto;
+      white-space: nowrap;
+    }
+
+    .eiffel-spotlight-tag .beacon-light {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #fbbf24;
+      box-shadow: 0 0 12px #fbbf24;
+      animation: beaconFlash 1.6s infinite ease-in-out;
+    }
+
+    @keyframes beaconFlash {
+      0%, 100% { opacity: 0.4; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.3); box-shadow: 0 0 18px #fbbf24; }
+    }
+
+    /* NÚT QUAY VỀ TRANG ĐẦU CÓ PULSE & HOVER RỰC RỠ */
+    .back-to-top-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: linear-gradient(135deg, var(--accent), #eab308);
+      color: #030712;
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+      padding: 16px 38px;
+      border-radius: 9999px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 10px 30px rgba(212, 175, 55, 0.4);
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      margin-top: 15px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .back-to-top-btn:hover {
+      transform: translateY(-5px) scale(1.04);
+      box-shadow: 0 20px 45px rgba(212, 175, 55, 0.65);
+      background: #ffffff;
+    }
+
+    .back-to-top-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke-width: 3;
+      transition: transform 0.3s ease;
+    }
+
+    .back-to-top-btn:hover svg {
+      transform: translateY(-4px);
+    }
+
+    /* GỢI Ý CUỘN CHUỘT */
+    .scroll-hint {
+      position: fixed;
+      bottom: 35px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+
+    .scroll-hint span {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .mouse-icon {
+      width: 20px;
+      height: 32px;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: 12px;
+      position: relative;
+    }
+
+    .mouse-wheel {
+      width: 3px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 2px;
+      position: absolute;
+      top: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      animation: wheelMove 2s infinite;
+    }
+
+    @keyframes wheelMove {
+      0% { transform: translate(-50%, 0); opacity: 1; }
+      100% { transform: translate(-50%, 14px); opacity: 0; }
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 1024px) {
+      .paris-split-container {
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      }
+      .paris-left-panel, .paris-right-panel {
+        width: 100%;
+        max-width: 500px;
+      }
+      #stage-4 {
+        padding-bottom: 20px;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .custom-cursor-dot, .custom-cursor-ring, .ambient-mouse-glow, #fx-canvas { display: none; }
+      .main-header { padding: 18px 24px; }
+      .nav-pill { display: none; }
+      .stage-section { padding: 0 20px; justify-content: center !important; text-align: center !important; }
+      .section-title { font-size: 32px; }
+      .glass-card { padding: 30px 24px; }
+      .metrics-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+      .metric-item .val { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- CON TRỎ CHUỘT TINH TẾ & VÙNG ÁNH SÁNG THEO DÕI CHUỘT -->
+  <div class="custom-cursor-dot" id="cursor-dot"></div>
+  <div class="custom-cursor-ring" id="cursor-ring"></div>
+  <div class="ambient-mouse-glow" id="mouse-glow"></div>
+
+  <!-- CANVAS HIỆU ỨNG TƯƠNG TÁC (CHIM HẢI ÂU BAY, BỤI SAO & BĂNG TRÔI) -->
+  <canvas id="fx-canvas"></canvas>
+
+  <!-- KHUNG CUỘN TRANG -->
+  <div class="scroll-container">
+
+    <!-- CANVAS CHUỖI HÌNH ẢNH MƯỢT MÀ -->
+    <div class="canvas-fixed">
+      <canvas id="flight-canvas"></canvas>
+    </div>
+
+    <!-- HIỆU ỨNG TỐI VIỀN ĐIỆN ẢNH -->
+    <div class="cinematic-vignette"></div>
+
+    <!-- HEADER HÃNG HÀNG KHÔNG BAO AIRLINES -->
+    <header class="main-header">
+      <a href="#" class="brand">
+        <div class="brand-logo">BAO</div>
+        <div class="brand-text">
+          <h1>BAO Airlines</h1>
+          <span>Luxury Sky Journey</span>
+        </div>
+      </a>
+
+      <nav class="nav-pill" id="main-nav">
+        <a class="nav-link active" onclick="scrollToStage(0.08)">Khoang Hạng Nhất</a>
+        <a class="nav-link" onclick="scrollToStage(0.38)">Tầng Mây Độc Bản</a>
+        <a class="nav-link" onclick="scrollToStage(0.66)">Hành Trình Paris</a>
+        <a class="nav-link" onclick="scrollToStage(0.95)">Đặt Chuyến Bay</a>
+      </nav>
+
+      <div class="header-actions">
+        <div class="flight-status-badge">
+          <div class="pulse-dot"></div>
+          <span>Chuyến bay BAO-889 • Paris</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- THANH TIẾN ĐỘ CHUYẾN BAY (BÊN PHẢI MÀN HÌNH) -->
+    <aside class="flight-progress-indicator">
+      <div class="alt-meter" id="alt-display">38.000 FT</div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill"></div>
+        <div class="progress-steps">
+          <div class="step-dot active" id="dot-0" title="Khởi hành"></div>
+          <div class="step-dot" id="dot-1" title="Tầng mây"></div>
+          <div class="step-dot" id="dot-2" title="Tiếp cận Paris"></div>
+          <div class="step-dot" id="dot-3" title="Hạ cánh"></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- GỢI Ý CUỘN TRANG -->
+    <div class="scroll-hint" id="scroll-hint">
+      <div class="mouse-icon">
+        <div class="mouse-wheel"></div>
+      </div>
+      <span>Cuộn để khám phá hành trình</span>
+    </div>
+
+    <!-- LỚP NỘI DUNG 4 PHÂN ĐOẠN (CHUYỂN CẢNH MƯỢT & NGẮT TEXT GIỮA CÁC FRAME) -->
+    <div class="stages-overlay">
+
+      <!-- PHÂN ĐOẠN 1: KHỞI HÀNH QUA CỬA SỔ MÁY BAY (Frames 01 - 15) -->
+      <section class="stage-section" id="stage-1">
+        <div class="glass-card" data-tilt>
+          <div class="card-spotlight"></div>
+          <div class="card-content">
+            <div class="card-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg>
+              Khởi Hành Từ Vòm Trời
+            </div>
+            <h2 class="section-title">
+              Mở Cánh Cửa <br><span class="serif-italic shimmer-text">Thưởng Ngoạn Tầng Mây</span>
+            </h2>
+            <p class="section-desc">
+              Chào mừng bạn đến với chuyến bay riêng biệt của <strong>BAO Airlines</strong>. Từ ô cửa sổ cabin hạng thương gia siêu rộng, đại dương mây bồng bềnh và dải ngân hà huyền ảo mở ra trước mắt, đưa bạn đến với hành trình nghỉ dưỡng chuẩn mực hoàng gia đích thực.
+            </p>
+            <div class="perks-list">
+              <div class="perk-item">
+                <span class="perk-icon">✦</span> Cửa sổ điện tử toàn cảnh Panorama tự động điều chỉnh độ mờ
+              </div>
+              <div class="perk-item">
+                <span class="perk-icon">✦</span> Quầy bar trên không riêng biệt phục vụ rượu vang Pháp hảo hạng
+              </div>
+            </div>
+            <div class="metrics-grid">
+              <div class="metric-item">
+                <div class="val">38.000<span style="font-size:13px;font-weight:400;color:var(--accent);"> ft</span></div>
+                <div class="lbl">Độ Cao Hành Trình</div>
+              </div>
+              <div class="metric-item">
+                <div class="val">920<span style="font-size:13px;font-weight:400;color:var(--accent);"> km/h</span></div>
+                <div class="lbl">Vận Tốc Bay</div>
+              </div>
+              <div class="metric-item">
+                <div class="val">5 Sao</div>
+                <div class="lbl">Dịch Vụ Khoang</div>
+              </div>
+            </div>
+            <div>
+              <button class="cta-btn-primary" onclick="scrollToStage(0.35)">
+                Khám Phá Tiếp
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PHÂN ĐOẠN 2: LƯỚT XUYÊN QUA TẦNG MÂY HUYỀN ẢO (Frames 18 - 32) -->
+      <section class="stage-section" id="stage-2">
+        <div class="glass-card" data-tilt>
+          <div class="card-spotlight"></div>
+          <div class="card-content">
+            <div class="card-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+              Trải Nghiệm Độc Bản
+            </div>
+            <h2 class="section-title">
+              Vượt Qua <span class="serif-italic shimmer-text">Tầng Mây Khát Vọng</span>
+            </h2>
+            <p class="section-desc">
+              Không gian tĩnh lặng trên độ cao vạn dặm. Với dịch vụ ẩm thực thượng hạng được thiết kế bởi các đầu bếp Michelin và giường nằm phẳng 180° bọc da thủ công Poltrona Frau, mỗi giây phút với BAO Airlines là một bản giao hưởng êm ái giữa bầu trời đêm lộng gió.
+            </p>
+            <div class="perks-list">
+              <div class="perk-item">
+                <span class="perk-icon">✦</span> Giác quan thư thái cùng âm thanh vòm chống ồn chủ động Bose
+              </div>
+              <div class="perk-item">
+                <span class="perk-icon">✦</span> Hệ thống lọc không khí HEPA y tế tươi mới mỗi 2 phút
+              </div>
+            </div>
+            <div class="metrics-grid">
+              <div class="metric-item">
+                <div class="val">100%</div>
+                <div class="lbl">Giường Nằm Phẳng</div>
+              </div>
+              <div class="metric-item">
+                <div class="val">0.0 db</div>
+                <div class="lbl">Khử Ồn Chủ Động</div>
+              </div>
+              <div class="metric-item">
+                <div class="val">Michelin</div>
+                <div class="lbl">Ẩm Thực Bầu Trời</div>
+              </div>
+            </div>
+            <div>
+              <button class="cta-btn-primary" onclick="scrollToStage(0.65)">
+                Tiến Vào Paris
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PHÂN ĐOẠN 3: ĐỈNH THÁP EIFFEL DẦN HÉ LỘ (Frames 35 - 45) -->
+      <section class="stage-section" id="stage-3">
+        <div class="glass-card" data-tilt>
+          <div class="card-spotlight"></div>
+          <div class="card-content">
+            <div class="card-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+              Kỳ Quan Châu Âu
+            </div>
+            <h2 class="section-title">
+              Kinh Đô Ánh Sáng <br><span class="serif-italic shimmer-text">Dưới Cánh Bay</span>
+            </h2>
+            <p class="section-desc">
+              Ngọn tháp Eiffel kiêu hãnh vươn mình qua biển sương mây huyền thoại của Paris hoa lệ. Luồng đèn quét hải đăng dẫn lối cho chuyến bay BAO Airlines đưa bạn chạm tay vào vùng đất lãng mạn bậc nhất thế giới, nơi tình yêu và nghệ thuật cùng thăng hoa.
+            </p>
+            <div class="perks-list">
+              <div class="perk-item">
+                <span class="perk-icon">✦</span> Dịch vụ Fast Track ưu tiên nhập cảnh không phải xếp hàng
+              </div>
+              <div class="perk-item">
+                <span class="perk-icon">✦</span> Đội xe Limousine Maybach đón rước tận chân máy bay về khách sạn
+              </div>
+            </div>
+            <div class="metrics-grid">
+              <div class="metric-item">
+                <div class="val">Paris</div>
+                <div class="lbl">Điểm Đến</div>
+              </div>
+              <div class="metric-item">
+                <div class="val">18°C</div>
+                <div class="lbl">Thời Tiết Đêm</div>
+              </div>
+              <div class="metric-item">
+                <div class="val">CDG</div>
+                <div class="lbl">Sân Bay Đến</div>
+              </div>
+            </div>
+            <div>
+              <button class="cta-btn-primary" onclick="scrollToStage(0.95)">
+                Hạ Cánh & Đặt Chỗ
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PHÂN ĐOẠN 4: THÁP TOÀN CẢNH Ở CHÍNH GIỮA & BỐ CỤC 2 CÁNH PHONG PHÚ -->
+      <section class="stage-section" id="stage-4">
+        
+        <!-- TAG TIÊU ĐIỂM NGỌN HẢI ĐĂNG THÁP EIFFEL Ở TRUNG TÂM PHÍA TRÊN -->
+        <div class="eiffel-spotlight-tag">
+          <div class="beacon-light"></div>
+          <span>Kỳ Quan Paris • Tháp Eiffel Vươn Mây</span>
+        </div>
+
+        <div class="paris-split-container">
+          
+          <!-- CÁNH TRÁI: THÔNG ĐIỆP CHÀO ĐÓN VÀ CHI TIẾT ĐẶC QUYỀN DU LỊCH -->
+          <div class="paris-left-panel">
+            <div class="paris-panel-card" data-tilt>
+              <div class="card-badge" style="margin-bottom: 12px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>
+                Điểm Đến Hoàn Mỹ
+              </div>
+              <h2 class="section-title" style="font-size: 34px; margin-bottom: 12px;">
+                Kính Chào <br><span class="serif-italic shimmer-text" style="color:var(--accent);">Paris Hoa Lệ</span>
+              </h2>
+              <p class="section-desc" style="font-size: 13.5px; line-height: 1.7; margin-bottom: 16px;">
+                Ngắm nhìn toàn cảnh ngọn Tháp Eiffel sừng sững giữa biển mây đêm. Hãy để <strong>BAO Airlines</strong> hiện thực hóa chuyến du hành trong mơ của bạn với những đặc quyền chuẩn mực quốc tế.
+              </p>
+              
+              <div class="perks-list" style="margin-bottom: 0;">
+                <div class="perk-item" style="font-size: 13px;">
+                  <span class="perk-icon">✦</span> Trải nghiệm ăn tối ngắm hoàng hôn trên đỉnh sông Seine
+                </div>
+                <div class="perk-item" style="font-size: 13px;">
+                  <span class="perk-icon">✦</span> Nghỉ dưỡng 5 đêm tại Suite khách sạn Ritz Paris danh giá
+                </div>
+                <div class="perk-item" style="font-size: 13px;">
+                  <span class="perk-icon">✦</span> Quản gia cá nhân chuyên trách suốt toàn bộ hành trình
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CÁNH PHẢI: BẢNG GIÁ, ĐẶT CHỖ & NÚT QUAY VỀ ĐẦU TRANG -->
+          <div class="paris-right-panel">
+            <div class="paris-panel-card" data-tilt>
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <div>
+                  <h3 style="font-size: 19px; font-weight: 800; letter-spacing: 0.5px;">Chuyến Bay Sẵn Sàng</h3>
+                  <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 2px;">Khởi hành hàng tuần • Hạng First Class</p>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-size: 24px; font-weight: 800; color: var(--accent); line-height: 1;">$1.299</div>
+                  <div style="font-size: 11px; color: rgba(255,255,255,0.6); text-decoration: line-through;">$1.850</div>
+                </div>
+              </div>
+
+              <!-- Lịch trình tóm tắt -->
+              <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 10px 14px; margin-bottom: 18px; display: flex; justify-content: space-between; font-size: 12px;">
+                <div><strong style="color:#fff;">Hà Nội / TP.HCM</strong><br><span style="color:var(--text-muted);">HAN / SGN</span></div>
+                <div style="display:flex; align-items:center; color:var(--accent); font-size:14px;">✈ 12h 45m</div>
+                <div style="text-align:right;"><strong style="color:#fff;">Paris CDG</strong><br><span style="color:var(--text-muted);">Pháp</span></div>
+              </div>
+              
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="cta-btn-primary" style="background:var(--accent); color:#000; justify-content: center; width: 100%; padding: 14px 20px;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg>
+                  Đặt Chuyến Bay Ngay
+                </button>
+                <button class="cta-btn-secondary" style="margin-left: 0; justify-content: center; width: 100%; padding: 13px 20px;">
+                  Tư Vấn Đặc Quyền VIP 24/7
+                </button>
+                
+                <!-- NÚT QUAY VỀ TRANG ĐẦU GỌN GÀNG -->
+                <button class="back-to-top-btn" id="btn-back-to-top" style="margin-top: 4px; padding: 12px 20px; font-size: 13px; width: 100%;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m18 15-6-6-6 6"/></svg>
+                  Quay Về Đầu Trang
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+
+  </div>
+
+  <script>
+    // --- 1. KHỞI TẠO CANVAS SEQUENCE (284 FRAMES - HIGH FPS) ---
+    const frameCount = 284;
+    const canvas = document.getElementById('flight-canvas');
+    const ctx = canvas.getContext('2d');
+
+    const getFrameUrl = (idx) => {
+      const padded = String(idx).padStart(3, '0');
+      return `ezgif-4c8184ffbcb119d2-jpg/ezgif-frame-${padded}.jpg`;
+    };
+
+    const images = [];
+    let loadedCount = 0;
+    let targetFrame = 1;
+    let currentFrame = 1;
+
+    function resizeCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      render(Math.round(currentFrame));
+
+      // Resize luôn canvas hiệu ứng chim & bụi sao
+      fxCanvas.width = window.innerWidth;
+      fxCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    function render(frameIdx) {
+      const img = images[frameIdx - 1];
+      if (!img || !img.complete || img.naturalWidth === 0) return;
+
+      const cw = canvas.width;
+      const ch = canvas.height;
+      const iw = img.naturalWidth;
+      const ih = img.naturalHeight;
+
+      const scale = Math.max(cw / iw, ch / ih);
+      const nw = iw * scale;
+      const nh = ih * scale;
+      const nx = (cw - nw) / 2;
+      const ny = (ch - nh) / 2;
+
+      ctx.clearRect(0, 0, cw, ch);
+      ctx.drawImage(img, nx, ny, nw, nh);
+    }
+
+    // Preload ảnh
+    for (let i = 1; i <= frameCount; i++) {
+      const img = new Image();
+      img.src = getFrameUrl(i);
+      img.onload = () => {
+        loadedCount++;
+        if (i === 1) {
+          resizeCanvas();
+          render(1);
+        }
+      };
+      images.push(img);
+    }
+
+    // --- 2. CANVAS HIỆU ỨNG SINH ĐỘNG: ĐÀN CHIM HẢI ÂU BAY & BỤI SAO LẤP LÁNH KHI CUỘN ---
+    const fxCanvas = document.getElementById('fx-canvas');
+    const fxCtx = fxCanvas.getContext('2d');
+    fxCanvas.width = window.innerWidth;
+    fxCanvas.height = window.innerHeight;
+
+    // Đàn chim bay vờn quanh mây trời
+    class Bird {
+      constructor() {
+        this.reset();
+      }
+      reset() {
+        this.x = Math.random() < 0.5 ? -40 : window.innerWidth + 40;
+        this.y = Math.random() * (window.innerHeight * 0.7);
+        this.speedX = (this.x < 0 ? 1 : -1) * (1.2 + Math.random() * 1.8);
+        this.speedY = (Math.random() - 0.5) * 0.8;
+        this.size = 12 + Math.random() * 14;
+        this.wingAngle = Math.random() * Math.PI * 2;
+        this.wingSpeed = 0.08 + Math.random() * 0.06;
+        this.opacity = 0.25 + Math.random() * 0.55;
+      }
+      update(scrollVelocity) {
+        this.x += this.speedX + scrollVelocity * 0.02;
+        this.y += this.speedY - scrollVelocity * 0.03;
+        this.wingAngle += this.wingSpeed + Math.abs(scrollVelocity) * 0.005;
+
+        // Nếu bay ra ngoài màn hình thì reset
+        if (this.x > window.innerWidth + 60 || this.x < -60 || this.y > window.innerHeight + 40 || this.y < -40) {
+          this.reset();
+        }
+      }
+      draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.strokeStyle = `rgba(255, 255, 255, ${this.opacity})`;
+        ctx.lineWidth = 1.5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        // Đôi cánh chim vỗ chuyển động mượt mà
+        const wingY = Math.sin(this.wingAngle) * (this.size * 0.45);
+        ctx.beginPath();
+        ctx.moveTo(-this.size, wingY);
+        ctx.quadraticCurveTo(-this.size * 0.4, -this.size * 0.3, 0, 0);
+        ctx.quadraticCurveTo(this.size * 0.4, -this.size * 0.3, this.size, wingY);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+    }
+
+    // Hạt bụi sao phát sáng (Star particles)
+    class Sparkle {
+      constructor() {
+        this.reset();
+      }
+      reset() {
+        this.x = Math.random() * window.innerWidth;
+        this.y = Math.random() * window.innerHeight;
+        this.size = 1 + Math.random() * 2.2;
+        this.alpha = Math.random();
+        this.speedAlpha = 0.01 + Math.random() * 0.02;
+        this.speedY = -(0.3 + Math.random() * 0.7);
+        this.speedX = (Math.random() - 0.5) * 0.4;
+      }
+      update(scrollVel) {
+        this.y += this.speedY - scrollVel * 0.05;
+        this.x += this.speedX;
+        this.alpha += this.speedAlpha;
+        if (this.alpha > 1 || this.alpha < 0) {
+          this.speedAlpha = -this.speedAlpha;
+        }
+        if (this.y < -20 || this.y > window.innerHeight + 20) {
+          this.reset();
+        }
+      }
+      draw(ctx) {
+        ctx.save();
+        ctx.fillStyle = `rgba(254, 240, 138, ${Math.max(0, Math.min(1, this.alpha * 0.7))})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    const birds = Array.from({ length: 6 }, () => new Bird());
+    const sparkles = Array.from({ length: 45 }, () => new Sparkle());
+    let lastScrollY = window.scrollY;
+    let scrollVelocity = 0;
+
+    // --- 3. CON TRỎ CHUỘT & ÁNH SÁNG THEO DÕI ---
+    const cursorDot = document.getElementById('cursor-dot');
+    const cursorRing = document.getElementById('cursor-ring');
+    const mouseGlow = document.getElementById('mouse-glow');
+
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+    let ringX = mouseX;
+    let ringY = mouseY;
+    let glowX = mouseX;
+    let glowY = mouseY;
+
+    window.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      cursorDot.style.left = `${mouseX}px`;
+      cursorDot.style.top = `${mouseY}px`;
+    });
+
+    document.querySelectorAll('a, button, .metric-item, .step-dot, .paris-panel-card').forEach(el => {
+      el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
+      el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
+    });
+
+    // --- 4. HIỆU ỨNG TILT 3D VÀ SPOTLIGHT ---
+    const cards = document.querySelectorAll('.glass-card[data-tilt], .paris-panel-card[data-tilt]');
+    cards.forEach(card => {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--mouse-x', `${x}px`);
+        card.style.setProperty('--mouse-y', `${y}px`);
+
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = ((y - centerY) / centerY) * -6;
+        const rotateY = ((x - centerX) / centerX) * 6;
+
+        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-3px)`;
+      });
+
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)`;
+      });
+    });
+
+    // --- 5. LOGIC CUỘN TRANG & CHUYỂN CẢNH MƯỢT NGẮT TEXT ---
+    const stage1 = document.getElementById('stage-1');
+    const stage2 = document.getElementById('stage-2');
+    const stage3 = document.getElementById('stage-3');
+    const stage4 = document.getElementById('stage-4');
+
+    const progressFill = document.getElementById('progress-fill');
+    const altDisplay = document.getElementById('alt-display');
+    const scrollHint = document.getElementById('scroll-hint');
+    const dots = [
+      document.getElementById('dot-0'),
+      document.getElementById('dot-1'),
+      document.getElementById('dot-2'),
+      document.getElementById('dot-3')
+    ];
+
+    dots[0].addEventListener('click', () => scrollToStage(0.08));
+    dots[1].addEventListener('click', () => scrollToStage(0.38));
+    dots[2].addEventListener('click', () => scrollToStage(0.66));
+    dots[3].addEventListener('click', () => scrollToStage(0.95));
+
+    let targetProgress = 0;
+    let currentProgress = 0;
+
+    function updateScrollProgress() {
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      targetProgress = maxScroll > 0 ? scrollTop / maxScroll : 0;
+      targetFrame = 1 + targetProgress * (frameCount - 1);
+
+      // Tính vận tốc cuộn chuột
+      scrollVelocity = scrollTop - lastScrollY;
+      lastScrollY = scrollTop;
+    }
+
+    window.addEventListener('scroll', updateScrollProgress, { passive: true });
+
+    function calcStageWeight(p, start, enterEnd, exitStart, end) {
+      if (p < start || p > end) return 0;
+      if (p >= enterEnd && p <= exitStart) return 1;
+      if (p < enterEnd) {
+        const t = (p - start) / (enterEnd - start);
+        return t * t * (3 - 2 * t);
+      } else {
+        const t = (end - p) / (end - exitStart);
+        return t * t * (3 - 2 * t);
+      }
+    }
+
+    function applyStageTransform(element, weight, slideDir = 'Y', distance = 35) {
+      element.style.opacity = weight.toFixed(3);
+      if (weight > 0.05) {
+        element.classList.add('active');
+      } else {
+        element.classList.remove('active');
+      }
+
+      const offset = (1 - weight) * distance;
+      const scale = 0.95 + weight * 0.05;
+
+      if (slideDir === 'Y') {
+        element.style.transform = `translateY(${offset}px) scale(${scale})`;
+      } else if (slideDir === 'X-left') {
+        element.style.transform = `translateX(${-offset}px) scale(${scale})`;
+      } else if (slideDir === 'X-right') {
+        element.style.transform = `translateX(${offset}px) scale(${scale})`;
+      }
+    }
+
+    function updateAnimations(p) {
+      if (scrollHint) {
+        scrollHint.style.opacity = Math.max(0, 1 - p * 8);
+      }
+
+      if (progressFill) {
+        progressFill.style.height = `${p * 100}%`;
+      }
+
+      if (altDisplay) {
+        let alt = 38000 - p * 35000;
+        alt = Math.max(1000, Math.round(alt));
+        altDisplay.innerText = `${alt.toLocaleString()} FT`;
+      }
+
+      // CHUYỂN CẢNH NGẮT TEXT GIỮA CÁC FRAME:
+      // Stage 1: p = 0.00 -> 0.22
+      const w1 = calcStageWeight(p, 0.00, 0.05, 0.16, 0.23);
+      applyStageTransform(stage1, w1, 'X-left', 40);
+
+      // Stage 2: p = 0.27 -> 0.51
+      const w2 = calcStageWeight(p, 0.27, 0.33, 0.44, 0.51);
+      applyStageTransform(stage2, w2, 'Y', 35);
+
+      // Stage 3: p = 0.54 -> 0.78
+      const w3 = calcStageWeight(p, 0.54, 0.60, 0.71, 0.78);
+      applyStageTransform(stage3, w3, 'X-right', 40);
+
+      // Stage 4: p = 0.81 -> 1.00 (Bố cục mở 2 bên hé lộ trọn vẹn tháp Eiffel ở giữa)
+      const w4 = calcStageWeight(p, 0.81, 0.88, 1.00, 1.00);
+      stage4.style.opacity = w4.toFixed(3);
+      if (w4 > 0.05) {
+        stage4.classList.add('active');
+      } else {
+        stage4.classList.remove('active');
+      }
+
+      const leftPanel = stage4.querySelector('.paris-left-panel');
+      const rightPanel = stage4.querySelector('.paris-right-panel');
+      const topTag = stage4.querySelector('.eiffel-spotlight-tag');
+
+      if (leftPanel) {
+        leftPanel.style.transform = `translateX(${(1 - w4) * -50}px)`;
+        leftPanel.style.opacity = w4.toFixed(3);
+      }
+      if (rightPanel) {
+        rightPanel.style.transform = `translateX(${(1 - w4) * 50}px)`;
+        rightPanel.style.opacity = w4.toFixed(3);
+      }
+      if (topTag) {
+        topTag.style.transform = `translate(-50%, ${(1 - w4) * -30}px)`;
+        topTag.style.opacity = w4.toFixed(3);
+      }
+
+      // Chấm tiến độ bên phải & Menu Header Nav
+      const navLinks = document.querySelectorAll('#main-nav .nav-link');
+      const activeIdx = p < 0.25 ? 0 : (p < 0.52 ? 1 : (p < 0.80 ? 2 : 3));
+
+      dots.forEach((dot, idx) => dot.classList.toggle('active', idx === activeIdx));
+      navLinks.forEach((link, idx) => link.classList.toggle('active', idx === activeIdx));
+    }
+
+    window.scrollToStage = function(ratio) {
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      window.scrollTo({
+        top: ratio * maxScroll,
+        behavior: 'smooth'
+      });
+    };
+
+    // Nút quay về đầu trang
+    const btnBackToTop = document.getElementById('btn-back-to-top');
+    if (btnBackToTop) {
+      btnBackToTop.addEventListener('click', () => {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      });
+    }
+
+    // --- 6. VÒNG LẶP ANIMATION LERP & VẼ HIỆU ỨNG SỐNG ĐỘNG ---
+    function animate() {
+      // Lerp chuỗi frame ảnh
+      currentFrame += (targetFrame - currentFrame) * 0.12;
+      const frameToDraw = Math.max(1, Math.min(frameCount, Math.round(currentFrame)));
+      render(frameToDraw);
+
+      // Lerp nội dung text và UI
+      currentProgress += (targetProgress - currentProgress) * 0.12;
+      updateAnimations(currentProgress);
+
+      // Giảm dần vận tốc cuộn chuột (friction)
+      scrollVelocity *= 0.92;
+
+      // Vẽ đàn chim & bụi sao lấp lánh trên mây
+      fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+      sparkles.forEach(s => {
+        s.update(scrollVelocity);
+        s.draw(fxCtx);
+      });
+      birds.forEach(b => {
+        b.update(scrollVelocity);
+        b.draw(fxCtx);
+      });
+
+      // Lerp cho con trỏ ring và vệt sáng chuột
+      ringX += (mouseX - ringX) * 0.18;
+      ringY += (mouseY - ringY) * 0.18;
+      cursorRing.style.left = `${ringX}px`;
+      cursorRing.style.top = `${ringY}px`;
+
+      glowX += (mouseX - glowX) * 0.08;
+      glowY += (mouseY - glowY) * 0.08;
+      mouseGlow.style.left = `${glowX}px`;
+      mouseGlow.style.top = `${glowY}px`;
+
+      requestAnimationFrame(animate);
+    }
+
+    updateAnimations(0);
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

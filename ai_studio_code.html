@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jacket Masters - Puffer Jacket Hero Banner</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+
+    @font-face {
+      font-family: 'VM Sans';
+      src: local('DM Sans'), local('URW Gothic'), local('Liberation Sans'), local('Inter'), sans-serif;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background-color: #000000;
+      color: #ffffff;
+      font-family: 'VM Sans', 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+    }
+
+    .banner {
+      width: 1440px;
+      height: 820px;
+      background-color: #000000;
+      position: relative;
+      padding: 44px 72px 36px 72px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+
+    /* HEADER */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 20;
+      width: 100%;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: #ffffff;
+    }
+
+    .brand-logo-box {
+      width: 32px;
+      height: 32px;
+      border: 1.5px solid #ffffff;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .brand-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #ffffff;
+    }
+
+    .nav-pill-container {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 9999px;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    .nav-item {
+      color: #ffffff;
+      text-decoration: none;
+      font-size: 11.5px;
+      font-weight: 500;
+      letter-spacing: 0.8px;
+      padding: 8px 18px;
+      border-radius: 9999px;
+      transition: all 0.25s ease;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .nav-item.active {
+      background: #ffffff;
+      color: #000000;
+      font-weight: 700;
+    }
+
+    .header-icons {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .icon-action-btn {
+      background: none;
+      border: none;
+      color: #ffffff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      transition: transform 0.2s;
+    }
+
+    .icon-action-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .icon-action-btn svg {
+      width: 21px;
+      height: 21px;
+      stroke: #ffffff;
+    }
+
+    /* MAIN HERO GRID */
+    .hero-main {
+      display: grid;
+      grid-template-columns: 390px 1fr 260px;
+      align-items: center;
+      position: relative;
+      width: 100%;
+      flex: 1;
+      margin-top: 5px;
+    }
+
+    /* LEFT COLUMN */
+    .hero-left-col {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    .slider-controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .slider-arrow-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .slider-arrow-btn:hover {
+      background: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
+    }
+
+    .slider-arrow-btn:hover svg {
+      stroke: #000000;
+    }
+
+    .slider-arrow-btn svg {
+      width: 15px;
+      height: 15px;
+      stroke: #ffffff;
+    }
+
+    .hero-heading {
+      font-size: 54px;
+      font-weight: 700;
+      line-height: 1.12;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      margin-bottom: 22px;
+    }
+
+    .hero-heading span {
+      display: block;
+    }
+
+    .hero-description {
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: #ffffff;
+      max-width: 375px;
+      margin-bottom: 34px;
+      font-weight: 400;
+      opacity: 0.95;
+    }
+
+    .hero-cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #ffffff;
+      color: #000000;
+      border-radius: 9999px;
+      padding: 13px 26px;
+      font-size: 13.5px;
+      font-weight: 700;
+      text-decoration: none;
+      width: fit-content;
+      box-shadow: 0 4px 18px rgba(255, 255, 255, 0.16);
+      transition: all 0.25s ease;
+      border: none;
+    }
+
+    .hero-cta-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(255, 255, 255, 0.25);
+    }
+
+    .hero-cta-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: #000000;
+      stroke-width: 2.8;
+    }
+
+    /* CENTER COLUMN */
+    .hero-center-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 5;
+    }
+
+    .jacket-stage {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      animation: floatJacket 5s ease-in-out infinite;
+    }
+
+    @keyframes floatJacket {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .jacket-tagline {
+      text-align: center;
+      font-size: 14.5px;
+      font-weight: 500;
+      line-height: 1.4;
+      color: #ffffff;
+      letter-spacing: 0.3px;
+      margin-top: -8px;
+    }
+
+    /* RIGHT COLUMN */
+    .hero-right-col {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      text-align: right;
+      z-index: 10;
+    }
+
+    .price-group {
+      margin-bottom: 42px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .price-current {
+      font-size: 42px;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .price-original {
+      font-size: 24px;
+      font-weight: 400;
+      color: #ffffff;
+      text-decoration: line-through;
+      text-decoration-thickness: 1.5px;
+      line-height: 1;
+      opacity: 0.85;
+    }
+
+    .size-selection-group {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 14px;
+    }
+
+    .size-heading {
+      font-size: 13.5px;
+      font-weight: 500;
+      color: #ffffff;
+    }
+
+    .size-buttons-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .size-circle-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    .size-circle-btn.selected {
+      background: #ffffff;
+      color: #000000;
+      font-weight: 700;
+    }
+
+    .size-circle-btn:not(.selected) {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #ffffff;
+    }
+
+    /* FOOTER */
+    .footer-bar {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      z-index: 20;
+      width: 100%;
+    }
+
+    .social-channels {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .social-icon-link {
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+
+    .social-icon-link:hover {
+      transform: translateY(-2px);
+      opacity: 0.8;
+    }
+
+    .social-icon-link svg {
+      width: 17px;
+      height: 17px;
+      fill: #ffffff;
+    }
+
+    .mini-variant-card {
+      width: 82px;
+      height: 82px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 14px;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      transition: all 0.25s ease;
+    }
+
+    .mini-variant-card:hover {
+      border-color: rgba(255, 255, 255, 0.35);
+      transform: translateY(-3px);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="banner">
+    
+    <!-- HEADER -->
+    <header class="header">
+      <a href="#" class="brand">
+        <div class="brand-logo-box">JM</div>
+        <span class="brand-title">JACKET MASTERS</span>
+      </a>
+
+      <nav class="nav-pill-container">
+        <a href="#puffer-jacket" class="nav-item active">PUFFER JACKET</a>
+        <a href="#all-products" class="nav-item">ALL PRODUCTS</a>
+        <a href="#about-us" class="nav-item">ABOUT US</a>
+        <a href="#contact" class="nav-item">CONTACT</a>
+      </nav>
+
+      <div class="header-icons">
+        <button class="icon-action-btn" aria-label="Cart">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+        </button>
+
+        <button class="icon-action-btn" aria-label="Wishlist">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- HERO MAIN -->
+    <main class="hero-main">
+      
+      <!-- CỘT TRÁI -->
+      <div class="hero-left-col">
+        <div class="slider-controls">
+          <button class="slider-arrow-btn" aria-label="Previous slide">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <button class="slider-arrow-btn" aria-label="Next slide">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+
+        <h1 class="hero-heading">
+          <span>Stand out</span>
+          <span>Without trying</span>
+        </h1>
+
+        <p class="hero-description">
+          It's not just about staying warm. It's about stepping outside and instantly feeling confident, comfortable, and completely yourself. Designed to elevate even the simplest outfit, this jacket wraps you in lightweight warmth.
+        </p>
+
+        <a href="#shop-now" class="hero-cta-btn">
+          <span>Get the look</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </a>
+      </div>
+
+      <!-- CỘT GIỮA: ÁO PHAO LƠ LỬNG -->
+      <div class="hero-center-col">
+        <div class="jacket-stage">
+          <!-- Áo phao đen 3D vector lơ lửng được nhúng trực tiếp trong file index.html -->
+        </div>
+        <div class="jacket-tagline">
+          Confidence,<br>wrapped in warmth
+        </div>
+      </div>
+
+      <!-- CỘT PHẢI: GIÁ & SIZE -->
+      <div class="hero-right-col">
+        <div class="price-group">
+          <div class="price-current">$149</div>
+          <div class="price-original">$199</div>
+        </div>
+
+        <div class="size-selection-group">
+          <span class="size-heading">Choose your size:</span>
+          <div class="size-buttons-row">
+            <button class="size-circle-btn selected">36</button>
+            <button class="size-circle-btn">38</button>
+            <button class="size-circle-btn">40</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer-bar">
+      <div class="social-channels">
+        <a href="#" class="social-icon-link" aria-label="Instagram">
+          <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+        </a>
+        <a href="#" class="social-icon-link" aria-label="Facebook">
+          <svg viewBox="0 0 24 24"><path d="M9 8H6v4h3v12h5V12h3.642L18 8h-4V6.333C14 5.374 14.5 5 15.688 5H18V0h-3.808C10.595 0 9 1.583 9 4.615V8z"/></svg>
+        </a>
+        <a href="#" class="social-icon-link" aria-label="Pinterest">
+          <svg viewBox="0 0 24 24"><path d="M12 0c-6.627 0-12 5.372-12 12 0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345-.09.375-.291 1.199-.334 1.357-.056.208-.18.252-.415.153-1.545-.719-2.511-2.977-2.511-4.793 0-3.902 2.835-7.487 8.176-7.487 4.364 0 7.756 3.11 7.756 7.266 0 4.336-2.734 7.827-6.529 7.827-1.275 0-2.474-.663-2.884-1.444l-.786 2.997c-.284 1.085-1.052 2.446-1.567 3.284 1.139.351 2.348.542 3.606.542 6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z"/></svg>
+        </a>
+        <a href="#" class="social-icon-link" aria-label="LinkedIn">
+          <svg viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+        </a>
+      </div>
+
+      <div class="mini-variant-card" title="Cream Colorway Preview">
+        <!-- Thumbnail áo phao màu kem -->
+      </div>
+    </footer>
+
+  </div>
+
+</body>
+</html>
