@@ -532,19 +532,32 @@
       margin-bottom: 18px;
       color: #ffffff;
       position: relative;
+      animation: floatTitle 6s ease-in-out infinite alternate;
+    }
+
+    @keyframes floatTitle {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
+      100% { transform: translateY(2px); }
     }
 
     .shimmer-text {
-      background: linear-gradient(110deg, #ffffff 0%, #ffffff 30%, #fef08a 45%, #67e8f9 55%, #ffffff 70%, #ffffff 100%);
-      background-size: 250% auto;
+      display: inline-block;
+      background: linear-gradient(110deg, #ffffff 0%, #ffffff 25%, #fef08a 45%, #67e8f9 55%, #f472b6 68%, #ffffff 80%, #ffffff 100%);
+      background-size: 280% auto;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      animation: textShine 4.5s linear infinite;
-      filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.45));
+      animation: textShine 4s linear infinite, glowPulse 3s ease-in-out infinite alternate;
+      filter: drop-shadow(0 0 14px rgba(212, 175, 55, 0.5));
     }
 
     @keyframes textShine {
-      to { background-position: 250% center; }
+      to { background-position: 280% center; }
+    }
+
+    @keyframes glowPulse {
+      0% { filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.4)); }
+      100% { filter: drop-shadow(0 0 22px rgba(103, 232, 249, 0.65)); }
     }
 
     .serif-italic {
@@ -581,15 +594,36 @@
       transition: all 1.2s ease-in-out;
     }
 
+    /* Hiệu ứng đoạn văn bồng bềnh lơ lửng nhẹ & luồng sáng chạy chữ */
     .section-desc {
       font-size: 14.5px;
       line-height: 1.8;
       color: var(--text-muted);
       margin-bottom: 24px;
       font-weight: 400;
+      transition: all 0.3s ease;
+      animation: floatSubtle 7s ease-in-out infinite alternate;
     }
 
-    /* DANH SÁCH ĐIỂM NỔI BẬT THIẾT KẾ HUYỀN ẢO */
+    @keyframes floatSubtle {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-3px); }
+    }
+
+    .section-desc strong {
+      color: #ffffff;
+      text-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
+      position: relative;
+      display: inline-block;
+      animation: wordBreathe 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes wordBreathe {
+      0% { transform: scale(1); filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.4)); }
+      100% { transform: scale(1.04); filter: drop-shadow(0 0 14px rgba(103, 232, 249, 0.8)); }
+    }
+
+    /* Chữ đặc quyền có vệt sáng lướt qua khi rê chuột */
     .perks-list {
       display: flex;
       flex-direction: column;
@@ -605,6 +639,14 @@
       gap: 10px;
       font-size: 13.5px;
       color: rgba(255, 255, 255, 0.88);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: default;
+    }
+
+    .perk-item:hover {
+      color: #ffffff;
+      transform: translateX(6px);
+      text-shadow: 0 0 12px rgba(103, 232, 249, 0.8);
     }
 
     .perk-icon {
@@ -612,6 +654,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      animation: iconSpinGlow 4s linear infinite;
+    }
+
+    @keyframes iconSpinGlow {
+      0% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 4px var(--accent)); }
+      50% { transform: scale(1.25) rotate(180deg); filter: drop-shadow(0 0 10px #67e8f9); }
+      100% { transform: scale(1) rotate(360deg); filter: drop-shadow(0 0 4px var(--accent)); }
     }
 
     /* GRID THÔNG SỐ VỚI HIỆU ỨNG HOVER */
@@ -1709,6 +1758,26 @@
         element.style.transform = `translateX(${-offset}px) scale(${scale})`;
       } else if (slideDir === 'X-right') {
         element.style.transform = `translateX(${offset}px) scale(${scale})`;
+      }
+
+      // HIỆU ỨNG CHỮ BAY NHẸ PHÂN TẦNG HUYỀN HUYỄN (STAGGERED CELESTIAL DRIFT)
+      const title = element.querySelector('.section-title');
+      const desc = element.querySelector('.section-desc');
+      const perks = element.querySelectorAll('.perk-item');
+
+      if (title) {
+        title.style.transform = `translateY(${(1 - weight) * 16}px)`;
+        title.style.opacity = Math.min(1, weight * 1.25);
+      }
+      if (desc) {
+        desc.style.transform = `translateY(${(1 - weight) * 24}px)`;
+        desc.style.opacity = Math.min(1, weight * 1.1);
+      }
+      if (perks) {
+        perks.forEach((p, idx) => {
+          p.style.transform = `translateX(${(1 - weight) * (18 + idx * 8)}px)`;
+          p.style.opacity = Math.min(1, weight * (1 + idx * 0.15));
+        });
       }
     }
 
