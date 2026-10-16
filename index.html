@@ -27,7 +27,7 @@
     }
 
     html {
-      scroll-behavior: smooth;
+      scroll-behavior: auto; /* Tránh xung đột double-smoothing gây giựt lag khi cuộn chuột */
     }
 
     body {
@@ -1278,27 +1278,29 @@
   </div>
 
   <script>
-    // --- 1. KHỞI TẠO CANVAS SEQUENCE (50 FRAMES 4K ULTRA-HD PNG) ---
-    const frameCount = 50;
+    // --- 1. KHỞI TẠO CANVAS SEQUENCE (284 FRAMES FULL HD SIÊU MƯỢT, 1080P NHẸ GẤP 15 LẦN PNG) ---
+    const frameCount = 284;
     const canvas = document.getElementById('flight-canvas');
-    const ctx = canvas.getContext('2d', { alpha: false }); // Tối ưu GPU: tắt alpha trên background canvas
+    const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
 
     const getFrameUrl = (idx) => {
       const padded = String(idx).padStart(3, '0');
-      return `a/ezgif-frame-${padded}.png`;
+      return `ezgif-4c8184ffbcb119d2-jpg/ezgif-frame-${padded}.jpg`;
     };
 
-    const images = [];
+    const images = new Array(frameCount);
     let loadedCount = 0;
     let targetFrame = 1;
     let currentFrame = 1;
     let lastDrawnFrame = -1;
 
     function resizeCanvas() {
-      // Giới hạn max DPR = 1.5 để đảm bảo 60fps mượt mà trên màn hình Retina / 4K
+      // DPR tối ưu 1.25 - 1.5 để đảm bảo tốc độ 60fps/120fps mượt như nhung
       const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       canvas.width = Math.round(window.innerWidth * dpr);
       canvas.height = Math.round(window.innerHeight * dpr);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'medium';
       lastDrawnFrame = -1; // Buộc vẽ lại frame sau khi resize
       render(Math.round(currentFrame));
 
@@ -1309,8 +1311,25 @@
     window.addEventListener('resize', resizeCanvas);
 
     function render(frameIdx) {
-      if (frameIdx === lastDrawnFrame) return; // BỎ QUA NẾU FRAME CHƯA ĐỔI -> Tránh ngốn GPU không cần thiết
-      const img = images[frameIdx - 1];
+      if (frameIdx === lastDrawnFrame) return; // Tránh vẽ lại khi frame không đổi
+      let img = images[frameIdx - 1];
+
+      // Nếu frame hiện tại đang tải, dùng ngay frame gần nhất đã sẵn sàng trong bộ nhớ -> không bao giờ chớp nháy
+      if (!img || !img.complete || img.naturalWidth === 0) {
+        for (let offset = 1; offset < 35; offset++) {
+          const prev = images[frameIdx - 1 - offset];
+          if (prev && prev.complete && prev.naturalWidth > 0) {
+            img = prev;
+            break;
+          }
+          const next = images[frameIdx - 1 + offset];
+          if (next && next.complete && next.naturalWidth > 0) {
+            img = next;
+            break;
+          }
+        }
+      }
+
       if (!img || !img.complete || img.naturalWidth === 0) return;
 
       const cw = canvas.width;
@@ -1328,33 +1347,37 @@
       lastDrawnFrame = frameIdx;
     }
 
-    // Preload ảnh không đồng bộ và giải mã trước (img.decode) để không chặn main-thread khi cuộn
-    for (let i = 1; i <= frameCount; i++) {
+    function loadImage(idx) {
+      if (images[idx - 1]) return images[idx - 1];
       const img = new Image();
-      img.src = getFrameUrl(i);
-      if ('decode' in img) {
-        img.decode().then(() => {
-          loadedCount++;
-          if (i === 1) {
-            resizeCanvas();
-            render(1);
-          }
-        }).catch(() => {
-          loadedCount++;
-        });
-      } else {
-        img.onload = () => {
-          loadedCount++;
-          if (i === 1) {
-            resizeCanvas();
-            render(1);
-          }
-        };
-      }
-      images.push(img);
+      img.src = getFrameUrl(idx);
+      img.onload = () => {
+        loadedCount++;
+        if (idx === 1 || Math.round(currentFrame) === idx) {
+          if (idx === 1) resizeCanvas();
+          render(Math.round(currentFrame));
+        }
+      };
+      images[idx - 1] = img;
+      return img;
     }
 
-    // --- 2. CANVAS HIỆU ỨNG TU TIÊN & HUYỀN HUYỄN TRÊN KHÔNG (KIẾM PHÁP, PHI KIẾM, MÁY BAY & SAO BĂNG) ---
+    // 1. Tải frame đầu tiên ngay lập tức
+    loadImage(1);
+
+    // 2. Tải trước các keyframe cách đều (mỗi 6 frames) để cuộn tới đâu cũng có ảnh mượt ngay
+    for (let i = 1; i <= frameCount; i += 6) {
+      loadImage(i);
+    }
+
+    // 3. Tải nền toàn bộ các frame còn lại (tổng 284 ảnh chỉ 8MB, siêu nhanh)
+    for (let i = 2; i <= frameCount; i++) {
+      if (!images[i - 1]) {
+        loadImage(i);
+      }
+    }
+
+    // --- 2. CANVAS HIỆU ỨNG TƯƠNG TÁC (TỐI ƯU HÓA GPU, BỎ SHADOWBLUR NẶNG NỀ) ---
     const fxCanvas = document.getElementById('fx-canvas');
     const fxCtx = fxCanvas.getContext('2d');
     fxCanvas.width = window.innerWidth;
@@ -1398,7 +1421,6 @@
         ctx.quadraticCurveTo(-this.size * 0.4, -this.size * 0.3, 0, 0);
         ctx.quadraticCurveTo(this.size * 0.4, -this.size * 0.3, this.size, wingY);
         ctx.stroke();
-
         ctx.restore();
       }
     }
@@ -1411,7 +1433,7 @@
       reset() {
         this.x = Math.random() * window.innerWidth;
         this.y = Math.random() * window.innerHeight;
-        this.size = 1 + Math.random() * 2.4;
+        this.size = 1 + Math.random() * 2.2;
         this.alpha = Math.random();
         this.speedAlpha = 0.01 + Math.random() * 0.02;
         this.speedY = -(0.3 + Math.random() * 0.7);
@@ -1431,8 +1453,6 @@
       draw(ctx) {
         ctx.save();
         ctx.fillStyle = `rgba(254, 240, 138, ${Math.max(0, Math.min(1, this.alpha * 0.75))})`;
-        ctx.shadowColor = '#fef08a';
-        ctx.shadowBlur = 6;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
@@ -1440,7 +1460,7 @@
       }
     }
 
-    // C. Phi Kiếm Tu Tiên ngự phong lướt qua bầu trời (Flying Celestial Sword)
+    // C. Phi Kiếm ngự phong lướt qua bầu trời
     class FlyingSword {
       constructor() {
         this.reset();
@@ -1451,14 +1471,14 @@
         this.speed = 3.5 + Math.random() * 3;
         this.angle = -0.15 + (Math.random() - 0.5) * 0.2;
         this.trail = [];
-        this.color = Math.random() < 0.6 ? '#67e8f9' : '#d4af37'; // Kiếm khí lam ngọc hoặc hoàng kim
+        this.color = Math.random() < 0.6 ? '#67e8f9' : '#d4af37';
       }
       update(scrollVel) {
         this.x += Math.cos(this.angle) * this.speed + Math.abs(scrollVel) * 0.05;
         this.y += Math.sin(this.angle) * this.speed;
 
         this.trail.unshift({ x: this.x, y: this.y, alpha: 1.0 });
-        if (this.trail.length > 22) this.trail.pop();
+        if (this.trail.length > 18) this.trail.pop();
         this.trail.forEach(t => t.alpha *= 0.88);
 
         if (this.x > window.innerWidth + 200) {
@@ -1467,7 +1487,6 @@
       }
       draw(ctx) {
         ctx.save();
-        // Vẽ vệt kiếm khí rực rỡ kéo dài phía sau
         if (this.trail.length > 1) {
           ctx.beginPath();
           ctx.moveTo(this.trail[0].x, this.trail[0].y);
@@ -1475,19 +1494,15 @@
             ctx.lineTo(this.trail[i].x, this.trail[i].y);
           }
           ctx.strokeStyle = this.color;
-          ctx.lineWidth = 3;
-          ctx.shadowColor = this.color;
-          ctx.shadowBlur = 14;
+          ctx.lineWidth = 2.5;
+          ctx.globalAlpha = 0.75;
           ctx.stroke();
         }
 
-        // Thân kiếm tu tiên
         ctx.translate(this.x, this.y);
         ctx.rotate(this.angle);
         ctx.fillStyle = '#ffffff';
-        ctx.shadowColor = this.color;
-        ctx.shadowBlur = 18;
-        
+        ctx.globalAlpha = 1.0;
         ctx.beginPath();
         ctx.moveTo(18, 0);
         ctx.lineTo(-14, -3);
@@ -1496,16 +1511,14 @@
         ctx.closePath();
         ctx.fill();
 
-        // Vòng chuôi kiếm
         ctx.strokeStyle = this.color;
         ctx.lineWidth = 2;
         ctx.strokeRect(-18, -6, 2, 12);
-
         ctx.restore();
       }
     }
 
-    // D. Máy Bay Phản Lực / Tên Lửa Vút Bay Lên Trời (Supersonic Jet & Rocket)
+    // D. Máy Bay Phản Lực / Tên Lửa Vút Bay Lên Trời
     class SkyRocket {
       constructor() {
         this.reset();
@@ -1521,7 +1534,6 @@
         this.y += this.speedY - Math.abs(scrollVel) * 0.08;
         this.x += this.speedX;
 
-        // Xả khói lửa phản lực
         if (Math.random() < 0.8) {
           this.smoke.push({
             x: this.x + (Math.random() - 0.5) * 4,
@@ -1544,26 +1556,20 @@
       }
       draw(ctx) {
         ctx.save();
-        // Vẽ khói lửa tên lửa
         this.smoke.forEach(s => {
           ctx.beginPath();
           ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
           ctx.fillStyle = s.color;
-          ctx.globalAlpha = s.alpha * 0.7;
-          ctx.shadowColor = s.color;
-          ctx.shadowBlur = 10;
+          ctx.globalAlpha = s.alpha * 0.6;
           ctx.fill();
         });
         ctx.globalAlpha = 1.0;
 
-        // Thân máy bay/tên lửa
         ctx.translate(this.x, this.y);
         const angle = Math.atan2(this.speedY, this.speedX) + Math.PI / 2;
         ctx.rotate(angle);
 
         ctx.fillStyle = '#ffffff';
-        ctx.shadowColor = '#38bdf8';
-        ctx.shadowBlur = 15;
         ctx.beginPath();
         ctx.moveTo(0, -16);
         ctx.lineTo(6, 12);
@@ -1572,7 +1578,6 @@
         ctx.closePath();
         ctx.fill();
 
-        // Ngọn lửa đuôi
         ctx.fillStyle = '#f59e0b';
         ctx.beginPath();
         ctx.moveTo(-3, 10);
@@ -1580,12 +1585,11 @@
         ctx.lineTo(3, 10);
         ctx.closePath();
         ctx.fill();
-
         ctx.restore();
       }
     }
 
-    // E. Sao Băng Huyền Ảo Quét Ngang Bầu Trời (Shooting Star / Meteor)
+    // E. Sao Băng Huyền Ảo Quét Ngang Bầu Trời
     class Meteor {
       constructor() {
         this.reset();
@@ -1596,7 +1600,7 @@
         this.length = 120 + Math.random() * 160;
         this.speed = 12 + Math.random() * 10;
         this.angle = Math.PI / 4 + (Math.random() - 0.5) * 0.2;
-        this.active = Math.random() < 0.25; // Xuất hiện ngẫu nhiên
+        this.active = Math.random() < 0.25;
       }
       update() {
         if (!this.active) {
@@ -1624,18 +1628,15 @@
 
         ctx.strokeStyle = grad;
         ctx.lineWidth = 2.5;
-        ctx.shadowColor = '#d4af37';
-        ctx.shadowBlur = 12;
         ctx.beginPath();
         ctx.moveTo(tailX, tailY);
         ctx.lineTo(this.x, this.y);
         ctx.stroke();
-
         ctx.restore();
       }
     }
 
-    // F. Vệt Kiếm Khí Bộc Phát Khi Click Chuột (Sword Burst Click Effect)
+    // F. Vệt Kiếm Khí Bộc Phát Khi Click Chuột
     const swordBursts = [];
     window.addEventListener('click', (e) => {
       for (let i = 0; i < 8; i++) {
@@ -1652,12 +1653,12 @@
       }
     });
 
-    const birds = Array.from({ length: 5 }, () => new Bird());
-    const sparkles = Array.from({ length: 32 }, () => new Sparkle());
+    const birds = Array.from({ length: 4 }, () => new Bird());
+    const sparkles = Array.from({ length: 26 }, () => new Sparkle());
     const swords = Array.from({ length: 2 }, () => new FlyingSword());
     const rockets = Array.from({ length: 2 }, () => new SkyRocket());
     const meteors = Array.from({ length: 3 }, () => new Meteor());
-    let lastScrollY = window.scrollY;
+    let lastScrollY = window.scrollY || 0;
     let scrollVelocity = 0;
 
     // --- 3. CON TRỎ CHUỘT & ÁNH SÁNG THEO DÕI ---
@@ -1707,11 +1708,37 @@
       });
     });
 
-    // --- 5. LOGIC CUỘN TRANG & CHUYỂN CẢNH MƯỢT NGẮT TEXT ---
+    // --- 5. LOGIC CUỘN TRANG & BỘ ĐIỀU TỐC MOMENTUM MƯỢT MÀ CHUẨN ĐIỆN ẢNH ---
     const stage1 = document.getElementById('stage-1');
     const stage2 = document.getElementById('stage-2');
     const stage3 = document.getElementById('stage-3');
     const stage4 = document.getElementById('stage-4');
+
+    // Cache trước DOM nodes để loại bỏ Layout Thrashing và QuerySelector trong requestAnimationFrame (60 FPS)
+    const stage1Obj = {
+      el: stage1,
+      title: stage1 ? stage1.querySelector('.section-title') : null,
+      desc: stage1 ? stage1.querySelector('.section-desc') : null,
+      perks: stage1 ? Array.from(stage1.querySelectorAll('.perk-item')) : []
+    };
+    const stage2Obj = {
+      el: stage2,
+      title: stage2 ? stage2.querySelector('.section-title') : null,
+      desc: stage2 ? stage2.querySelector('.section-desc') : null,
+      perks: stage2 ? Array.from(stage2.querySelectorAll('.perk-item')) : []
+    };
+    const stage3Obj = {
+      el: stage3,
+      title: stage3 ? stage3.querySelector('.section-title') : null,
+      desc: stage3 ? stage3.querySelector('.section-desc') : null,
+      perks: stage3 ? Array.from(stage3.querySelectorAll('.perk-item')) : []
+    };
+    const stage4Obj = {
+      el: stage4,
+      leftPanel: stage4 ? stage4.querySelector('.paris-left-panel') : null,
+      rightPanel: stage4 ? stage4.querySelector('.paris-right-panel') : null,
+      topTag: stage4 ? stage4.querySelector('.eiffel-spotlight-tag') : null
+    };
 
     const progressFill = document.getElementById('progress-fill');
     const altDisplay = document.getElementById('alt-display');
@@ -1722,15 +1749,32 @@
       document.getElementById('dot-2'),
       document.getElementById('dot-3')
     ];
-
-    dots[0].addEventListener('click', () => scrollToStage(0.08));
-    dots[1].addEventListener('click', () => scrollToStage(0.38));
-    dots[2].addEventListener('click', () => scrollToStage(0.66));
-    dots[3].addEventListener('click', () => scrollToStage(0.95));
+    const navLinks = Array.from(document.querySelectorAll('#main-nav .nav-link'));
 
     let targetProgress = 0;
     let currentProgress = 0;
     let lastRenderedProgress = -1;
+    let targetScrollY = window.scrollY || document.documentElement.scrollTop;
+    let isSmoothWheeling = false;
+
+    // Smooth Momentum Wheel Interceptor: giải quyết triệt để vấn đề chuột giật nấc 100px của Windows
+    window.addEventListener('wheel', (e) => {
+      if (e.ctrlKey) return; // Cho phép zoom trình duyệt bình thường
+      e.preventDefault();
+
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      // Damping hệ số 0.85 giúp mỗi nhịp lăn trôi nhẹ nhàng và cực kỳ êm ái
+      targetScrollY = Math.max(0, Math.min(maxScroll, targetScrollY + e.deltaY * 0.85));
+      isSmoothWheeling = true;
+    }, { passive: false });
+
+    // Lắng nghe scroll để cập nhật khi người dùng kéo scrollbar hoặc bấm phím
+    window.addEventListener('scroll', () => {
+      if (!isSmoothWheeling) {
+        targetScrollY = window.scrollY || document.documentElement.scrollTop;
+      }
+      updateScrollProgress();
+    }, { passive: true });
 
     function updateScrollProgress() {
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
@@ -1738,12 +1782,28 @@
       targetProgress = maxScroll > 0 ? scrollTop / maxScroll : 0;
       targetFrame = 1 + targetProgress * (frameCount - 1);
 
-      // Tính vận tốc cuộn chuột
       scrollVelocity = scrollTop - lastScrollY;
       lastScrollY = scrollTop;
     }
 
-    window.addEventListener('scroll', updateScrollProgress, { passive: true });
+    dots[0].addEventListener('click', () => scrollToStage(0.08));
+    dots[1].addEventListener('click', () => scrollToStage(0.38));
+    dots[2].addEventListener('click', () => scrollToStage(0.66));
+    dots[3].addEventListener('click', () => scrollToStage(0.95));
+
+    window.scrollToStage = function(ratio) {
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      targetScrollY = ratio * maxScroll;
+      isSmoothWheeling = true;
+    };
+
+    const btnBackToTop = document.getElementById('btn-back-to-top');
+    if (btnBackToTop) {
+      btnBackToTop.addEventListener('click', () => {
+        targetScrollY = 0;
+        isSmoothWheeling = true;
+      });
+    }
 
     function calcStageWeight(p, start, enterEnd, exitStart, end) {
       if (p < start || p > end) return 0;
@@ -1757,7 +1817,9 @@
       }
     }
 
-    function applyStageTransform(element, weight, slideDir = 'Y', distance = 35) {
+    function applyStageTransform(stage, weight, slideDir = 'Y', distance = 35) {
+      const element = stage.el;
+      if (!element) return;
       element.style.opacity = weight.toFixed(3);
       if (weight > 0.05) {
         element.classList.add('active');
@@ -1776,21 +1838,17 @@
         element.style.transform = `translate3d(${offset.toFixed(1)}px, 0, 0) scale(${scale.toFixed(3)})`;
       }
 
-      // HIỆU ỨNG CHỮ BAY PHÂN TẦNG TINH TẾ & MƯỢT MÀ
-      const title = element.querySelector('.section-title');
-      const desc = element.querySelector('.section-desc');
-      const perks = element.querySelectorAll('.perk-item');
-
-      if (title) {
-        title.style.transform = `translate3d(0, ${((1 - weight) * 16).toFixed(1)}px, 0)`;
-        title.style.opacity = Math.min(1, weight * 1.25).toFixed(3);
+      // Biến đổi các thành phần con với pre-cached references
+      if (stage.title) {
+        stage.title.style.transform = `translate3d(0, ${((1 - weight) * 16).toFixed(1)}px, 0)`;
+        stage.title.style.opacity = Math.min(1, weight * 1.25).toFixed(3);
       }
-      if (desc) {
-        desc.style.transform = `translate3d(0, ${((1 - weight) * 24).toFixed(1)}px, 0)`;
-        desc.style.opacity = Math.min(1, weight * 1.1).toFixed(3);
+      if (stage.desc) {
+        stage.desc.style.transform = `translate3d(0, ${((1 - weight) * 24).toFixed(1)}px, 0)`;
+        stage.desc.style.opacity = Math.min(1, weight * 1.1).toFixed(3);
       }
-      if (perks) {
-        perks.forEach((p, idx) => {
+      if (stage.perks.length > 0) {
+        stage.perks.forEach((p, idx) => {
           p.style.transform = `translate3d(${((1 - weight) * (18 + idx * 8)).toFixed(1)}px, 0, 0)`;
           p.style.opacity = Math.min(1, weight * (1 + idx * 0.15)).toFixed(3);
         });
@@ -1798,7 +1856,6 @@
     }
 
     function updateAnimations(p) {
-      // Chỉ cập nhật DOM khi progress có thay đổi đáng kể (> 0.0003) để tránh Layout Reflows
       if (Math.abs(p - lastRenderedProgress) < 0.0003) return;
       lastRenderedProgress = p;
 
@@ -1819,117 +1876,94 @@
       // CHUYỂN CẢNH NGẮT TEXT GIỮA CÁC FRAME:
       // Stage 1: p = 0.00 -> 0.22
       const w1 = calcStageWeight(p, 0.00, 0.05, 0.16, 0.23);
-      applyStageTransform(stage1, w1, 'X-left', 40);
+      applyStageTransform(stage1Obj, w1, 'X-left', 40);
 
       // Stage 2: p = 0.27 -> 0.51
       const w2 = calcStageWeight(p, 0.27, 0.33, 0.44, 0.51);
-      applyStageTransform(stage2, w2, 'Y', 35);
+      applyStageTransform(stage2Obj, w2, 'Y', 35);
 
       // Stage 3: p = 0.54 -> 0.78
       const w3 = calcStageWeight(p, 0.54, 0.60, 0.71, 0.78);
-      applyStageTransform(stage3, w3, 'X-right', 40);
+      applyStageTransform(stage3Obj, w3, 'X-right', 40);
 
       // Stage 4: p = 0.81 -> 1.00 (Bố cục mở 2 bên hé lộ trọn vẹn tháp Eiffel ở giữa)
       const w4 = calcStageWeight(p, 0.81, 0.88, 1.00, 1.00);
-      stage4.style.opacity = w4.toFixed(3);
-      if (w4 > 0.05) {
-        stage4.classList.add('active');
-      } else {
-        stage4.classList.remove('active');
+      if (stage4Obj.el) {
+        stage4Obj.el.style.opacity = w4.toFixed(3);
+        if (w4 > 0.05) {
+          stage4Obj.el.classList.add('active');
+        } else {
+          stage4Obj.el.classList.remove('active');
+        }
       }
 
-      const leftPanel = stage4.querySelector('.paris-left-panel');
-      const rightPanel = stage4.querySelector('.paris-right-panel');
-      const topTag = stage4.querySelector('.eiffel-spotlight-tag');
-
-      if (leftPanel) {
-        leftPanel.style.transform = `translate3d(${((1 - w4) * -50).toFixed(1)}px, 0, 0)`;
-        leftPanel.style.opacity = w4.toFixed(3);
+      if (stage4Obj.leftPanel) {
+        stage4Obj.leftPanel.style.transform = `translate3d(${((1 - w4) * -50).toFixed(1)}px, 0, 0)`;
+        stage4Obj.leftPanel.style.opacity = w4.toFixed(3);
       }
-      if (rightPanel) {
-        rightPanel.style.transform = `translate3d(${((1 - w4) * 50).toFixed(1)}px, 0, 0)`;
-        rightPanel.style.opacity = w4.toFixed(3);
+      if (stage4Obj.rightPanel) {
+        stage4Obj.rightPanel.style.transform = `translate3d(${((1 - w4) * 50).toFixed(1)}px, 0, 0)`;
+        stage4Obj.rightPanel.style.opacity = w4.toFixed(3);
       }
-      if (topTag) {
-        topTag.style.transform = `translate3d(-50%, ${((1 - w4) * -30).toFixed(1)}px, 0)`;
-        topTag.style.opacity = w4.toFixed(3);
+      if (stage4Obj.topTag) {
+        stage4Obj.topTag.style.transform = `translate3d(-50%, ${((1 - w4) * -30).toFixed(1)}px, 0)`;
+        stage4Obj.topTag.style.opacity = w4.toFixed(3);
       }
 
       // Chấm tiến độ bên phải & Menu Header Nav
-      const navLinks = document.querySelectorAll('#main-nav .nav-link');
       const activeIdx = p < 0.25 ? 0 : (p < 0.52 ? 1 : (p < 0.80 ? 2 : 3));
-
-      dots.forEach((dot, idx) => dot.classList.toggle('active', idx === activeIdx));
-      navLinks.forEach((link, idx) => link.classList.toggle('active', idx === activeIdx));
-    }
-
-    window.scrollToStage = function(ratio) {
-      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-      window.scrollTo({
-        top: ratio * maxScroll,
-        behavior: 'smooth'
+      dots.forEach((dot, idx) => {
+        if (dot) dot.classList.toggle('active', idx === activeIdx);
       });
-    };
-
-    // Nút quay về đầu trang
-    const btnBackToTop = document.getElementById('btn-back-to-top');
-    if (btnBackToTop) {
-      btnBackToTop.addEventListener('click', () => {
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth'
-        });
+      navLinks.forEach((link, idx) => {
+        if (link) link.classList.toggle('active', idx === activeIdx);
       });
     }
 
-    // --- 6. VÒNG LẶP ANIMATION LERP & VẼ HIỆU ỨNG SỐNG ĐỘNG (60FPS CINEMATIC DAMPING) ---
+    // --- 6. VÒNG LẶP ANIMATION LERP & VẼ HIỆU ỨNG SỐNG ĐỘNG (60FPS/120FPS CINEMATIC) ---
     function animate() {
-      // Lerp chuỗi frame mượt mà chuẩn điện ảnh (tinh chỉnh damping 0.085)
-      currentFrame += (targetFrame - currentFrame) * 0.085;
+      // 1. Quán tính cuộn mượt mà (Smooth Momentum Scroll)
+      if (isSmoothWheeling) {
+        const currentScrollY = window.scrollY || document.documentElement.scrollTop;
+        const diff = targetScrollY - currentScrollY;
+        if (Math.abs(diff) > 0.6) {
+          window.scrollTo(0, currentScrollY + diff * 0.14);
+        } else {
+          window.scrollTo(0, targetScrollY);
+          isSmoothWheeling = false;
+        }
+      }
+
+      // 2. Lerp chuỗi frame mượt mà chuẩn điện ảnh (Tối ưu phản hồi nhanh 0.16)
+      const frameDiff = targetFrame - currentFrame;
+      if (Math.abs(frameDiff) > 0.01) {
+        currentFrame += frameDiff * 0.16;
+      } else {
+        currentFrame = targetFrame;
+      }
       const frameToDraw = Math.max(1, Math.min(frameCount, Math.round(currentFrame)));
       render(frameToDraw);
 
-      // Lerp nội dung text và UI
-      currentProgress += (targetProgress - currentProgress) * 0.085;
+      // 3. Lerp nội dung text và UI
+      const progDiff = targetProgress - currentProgress;
+      if (Math.abs(progDiff) > 0.0001) {
+        currentProgress += progDiff * 0.16;
+      } else {
+        currentProgress = targetProgress;
+      }
       updateAnimations(currentProgress);
 
-      // Giảm dần vận tốc cuộn chuột (friction)
+      // 4. Giảm dần vận tốc cuộn chuột
       scrollVelocity *= 0.92;
 
-      // Vẽ đàn chim, bụi sao, phi kiếm, tên lửa & sao băng huyền huyễn trên mây
+      // 5. Vẽ hạt bụi, sao băng, đàn chim & phi kiếm (đã loại bỏ shadowBlur nặng)
       fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
-      
-      // 1. Bụi sao
-      sparkles.forEach(s => {
-        s.update(scrollVelocity);
-        s.draw(fxCtx);
-      });
+      sparkles.forEach(s => { s.update(scrollVelocity); s.draw(fxCtx); });
+      meteors.forEach(m => { m.update(); m.draw(fxCtx); });
+      birds.forEach(b => { b.update(scrollVelocity); b.draw(fxCtx); });
+      swords.forEach(sw => { sw.update(scrollVelocity); sw.draw(fxCtx); });
+      rockets.forEach(rk => { rk.update(scrollVelocity); rk.draw(fxCtx); });
 
-      // 2. Sao băng
-      meteors.forEach(m => {
-        m.update();
-        m.draw(fxCtx);
-      });
-
-      // 3. Đàn chim
-      birds.forEach(b => {
-        b.update(scrollVelocity);
-        b.draw(fxCtx);
-      });
-
-      // 4. Phi kiếm tu tiên ngự phong
-      swords.forEach(sw => {
-        sw.update(scrollVelocity);
-        sw.draw(fxCtx);
-      });
-
-      // 5. Tên lửa phản lực vút bay lên tầng mây
-      rockets.forEach(rk => {
-        rk.update(scrollVelocity);
-        rk.draw(fxCtx);
-      });
-
-      // 6. Kiếm khí bộc phát khi click chuột
       for (let i = swordBursts.length - 1; i >= 0; i--) {
         const b = swordBursts[i];
         b.x += b.vx;
@@ -1938,9 +1972,7 @@
 
         fxCtx.save();
         fxCtx.strokeStyle = b.color;
-        fxCtx.shadowColor = b.color;
-        fxCtx.shadowBlur = 12;
-        fxCtx.lineWidth = 2.5 * b.life;
+        fxCtx.lineWidth = 2 * b.life;
         fxCtx.globalAlpha = b.life;
         fxCtx.beginPath();
         fxCtx.moveTo(b.x, b.y);
@@ -1951,7 +1983,7 @@
         if (b.life < 0.05) swordBursts.splice(i, 1);
       }
 
-      // Lerp cho con trỏ ring và vệt sáng chuột
+      // 6. Lerp cho con trỏ ring và vệt sáng chuột
       ringX += (mouseX - ringX) * 0.18;
       ringY += (mouseY - ringY) * 0.18;
       cursorRing.style.left = `${ringX}px`;
@@ -1965,6 +1997,7 @@
       requestAnimationFrame(animate);
     }
 
+    updateScrollProgress();
     updateAnimations(0);
     requestAnimationFrame(animate);
   </script>
